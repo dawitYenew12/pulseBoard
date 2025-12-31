@@ -1,14 +1,163 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+/* =========================
+   USERS
+========================= */
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(EMPLOYEE)
+  isVerified    Boolean   @default(false)   // email verification
+
+  projectsOwned Project[]        @relation("ProjectOwner") // PMs who own projects
+  tasksAssigned Task[]           @relation("TaskAssignee") // Tasks assigned to this employee
+  tasksCreated  Task[]           @relation("TaskCreator")  // Tasks created by this user (PM)
+  tokens        Token[]
+  focusSessions FocusSession[]
+  logs          Log[]
+  projectMemberships ProjectMember[]
+  projectsAsMember Project[] @relation("ProjectMembers")
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+enum Role {
+  SUPERADMIN
+  PM
+  EMPLOYEE
+}
+
+/* =========================
+   TOKENS (Refresh tokens)
+========================= */
+model Token {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  userId    String
+  type      TokenType @default(REFRESH)
+  expires   DateTime
+  revoked   Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum TokenType {
+  REFRESH
+}
+
+/* =========================
+   PROJECTS
+========================= */
+model Project {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  pmId        String    // PM owner
+
+  pm          User      @relation("ProjectOwner", fields: [pmId], references: [id])
+  tasks       Task[]
+  members     User[]    @relation("ProjectMembers") // Employees in project
+  projectMembers ProjectMember[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+/* Many-to-many linking table */
+model ProjectMember {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+/* =========================
+   TASKS
+========================= */
+model Task {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  dueDate     DateTime?
+
+  projectId   String
+  assignedTo  String?      // Employee assigned
+  creatorId   String       // PM who created
+
+  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee    User?        @relation("TaskAssignee", fields: [assignedTo], references: [id])
+  creator     User         @relation("TaskCreator", fields: [creatorId], references: [id])
+
+  focusSessions FocusSession[]
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+/* =========================
+   FOCUS SESSIONS
+========================= */
+model FocusSession {
+  id          String   @id @default(uuid())
+  userId      String
+  taskId      String?
+
+  startTime   DateTime
+  endTime     DateTime?
+  durationMin Int?
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task        Task?    @relation(fields: [taskId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+/* =========================
+   LOGS
+========================= */
+model Log {
+  id        String    @id @default(uuid())
+  userId    String?
+  action    LogAction
+  message   String
+  metadata  Json?
+
+  user      User?     @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+}
+
+enum LogAction {
+  AUTH
+  TASK
+  PROJECT
+  FOCUS_SESSION
+  ERROR
 }
