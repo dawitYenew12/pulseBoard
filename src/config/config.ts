@@ -17,12 +17,21 @@ const parsed = envVarSchema.safeParse({
     JWT_SECRET: process.env.JWT_SECRET,
     JWT_ACCESS_EXPIRATION_MINUTES: process.env.JWT_ACCESS_EXPIRATION_MINUTES,
     JWT_REFRESH_EXPIRATION_DAYS: process.env.JWT_REFRESH_EXPIRATION_DAYS,
+    JWT_VERIFICATION_EXPIRATION_MINUTES:
+      process.env.JWT_VERIFICATION_EXPIRATION_MINUTES,
   },
   cors: {
     CORS_ORIGIN: process.env.CORS_ORIGIN,
   },
   csp: {
     CSP_OPTIONS: process.env.CSP_OPTIONS,
+  },
+  email: {
+    EMAIL_USER: process.env.EMAIL_USER,
+    EMAIL_CLIENT_ID: process.env.EMAIL_CLIENT_ID,
+    EMAIL_CLIENT_SECRET: process.env.EMAIL_CLIENT_SECRET,
+    EMAIL_REDIRECT_URI: process.env.EMAIL_REDIRECT_URI,
+    EMAIL_REFRESH_TOKEN: process.env.EMAIL_REFRESH_TOKEN,
   },
 });
 if (!parsed.success) {
@@ -44,6 +53,14 @@ interface Config {
     secretKey: string;
     accessTokenMinutes: number;
     refreshTokenDays: number;
+    verificationTokenMinutes: number;
+  };
+  email: {
+    user: string;
+    clientId: string;
+    clientSecret: string;
+    redirectUri: string;
+    refreshToken: string;
   };
 }
 
@@ -59,6 +76,14 @@ const config: Config = {
     secretKey: envVars.jwt.JWT_SECRET,
     accessTokenMinutes: envVars.jwt.JWT_ACCESS_EXPIRATION_MINUTES,
     refreshTokenDays: envVars.jwt.JWT_REFRESH_EXPIRATION_DAYS,
+    verificationTokenMinutes: envVars.jwt.JWT_VERIFICATION_EXPIRATION_MINUTES,
+  },
+  email: {
+    user: envVars.email.EMAIL_USER,
+    clientId: envVars.email.EMAIL_CLIENT_ID,
+    clientSecret: envVars.email.EMAIL_CLIENT_SECRET,
+    redirectUri: envVars.email.EMAIL_REDIRECT_URI,
+    refreshToken: envVars.email.EMAIL_REFRESH_TOKEN,
   },
 };
 

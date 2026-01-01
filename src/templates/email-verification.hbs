@@ -1,0 +1,101 @@
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 20px auto;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff;
+        padding: 30px;
+        text-align: center;
+    }
+
+    .header h1 {
+        margin: 0;
+        font-size: 28px;
+    }
+
+    .content {
+        padding: 40px 30px;
+    }
+
+    .content h2 {
+        color: #667eea;
+        margin-top: 0;
+    }
+
+    .content p {
+        margin-bottom: 20px;
+    }
+
+    .button {
+        display: inline-block;
+        padding: 14px 32px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 20px 0;
+        transition: transform 0.2s;
+    }
+
+    .button:hover {
+        transform: translateY(-2px);
+        text-decoration: none;
+        color: #ffffff;
+    }
+
+    .footer {
+        background: #f8f9fa;
+        padding: 20px 30px;
+        text-align: center;
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .footer p {
+        margin: 5px 0;
+    }
+</style>
+
+<div class="container">
+    <div class="header">
+        <h1>📧 Email Verification</h1>
+    </div>
+    <div class="content">
+        <h2>Hello {{customName}}!</h2>
+        <p>Thank you for signing up! We're excited to have you on board.</p>
+        <p>To complete your registration and verify your email address, please click the button below:</p>
+        <div style="text-align: center;">
+            <a href="{{verificationUrl}}" class="button">Verify Email Address</a>
+        </div>
+        <p style="margin-top: 30px; font-size: 14px; color: #6c757d;">
+            If the button doesn't work, you can copy and paste this link into your browser:
+        </p>
+        <p style="word-break: break-all; font-size: 14px; color: #667eea;">
+            {{verificationUrl}}
+        </p>
+        <p style="margin-top: 30px; font-size: 14px; color: #6c757d;">
+            <strong>Note:</strong> This link will expire in 15 minutes for security reasons.
+        </p>
+    </div>
+    <div class="footer">
+        <p>If you didn't create an account, please ignore this email.</p>
+        <p>&copy; 2026 PulseBoard. All rights reserved.</p>
+    </div>
+</div>
