@@ -2,18 +2,18 @@
   "name": "pulseboard",
   "version": "1.0.0",
   "description": "",
-  "type": "module",
-  "main": "index.js","scripts": {
-  "build": "tsc",
-  "start": "node dist/index.js",
-  "dev": "ts-node src/index.ts",
-  "lint": "eslint .",
-  "lint:fix": "eslint . --fix",
-  "prettier": "prettier --check **/*.ts",
-  "prettier:fix": "prettier --write **/*.ts",
-  "lint-staged": "lint-staged",
-  "prepare": "husky && husky install"
-},
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prettier": "prettier --check **/*.ts",
+    "prettier:fix": "prettier --write **/*.ts",
+    "lint-staged": "lint-staged",
+    "prepare": "husky && husky install"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -22,8 +22,11 @@
     "@tsconfig/node22": "^22.0.5",
     "@types/express": "^5.0.6",
     "@types/node": "^25.0.3",
+    "@types/pg": "^8.16.0",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.2",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-security": "^3.0.1",
     "express": "^5.2.1",
     "husky": "^9.1.7",
     "install": "^0.13.0",
@@ -31,6 +34,7 @@
     "nodemon": "^3.1.11",
     "npm": "^11.7.0",
     "prettier": "3.7.4",
+    "prisma": "^7.2.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.51.0"
@@ -38,8 +42,11 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
+    "@types/cors": "^2.8.19",
+    "cors": "^2.8.5",
     "http-status": "^2.1.0",
     "pg": "^8.16.3",
-    "prisma": "^7.2.0"
+    "winston": "^3.19.0",
+    "zod": "^4.3.4"
   }
 }

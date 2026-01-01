@@ -6,27 +6,29 @@ datasource db {
   provider = "postgresql"
 }
 
-/* =========================
-   USERS
-========================= */
+/**
+ * =========================
+ * USERS
+ * =========================
+ */
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  passwordHash  String
-  role          Role      @default(EMPLOYEE)
-  isVerified    Boolean   @default(false)   // email verification
+  id           String  @id @default(uuid())
+  email        String  @unique
+  passwordHash String
+  role         Role    @default(EMPLOYEE)
+  isVerified   Boolean @default(false) // email verification
 
-  projectsOwned Project[]        @relation("ProjectOwner") // PMs who own projects
-  tasksAssigned Task[]           @relation("TaskAssignee") // Tasks assigned to this employee
-  tasksCreated  Task[]           @relation("TaskCreator")  // Tasks created by this user (PM)
-  tokens        Token[]
-  focusSessions FocusSession[]
-  logs          Log[]
+  projectsOwned      Project[]       @relation("ProjectOwner") // PMs who own projects
+  tasksAssigned      Task[]          @relation("TaskAssignee") // Tasks assigned to this employee
+  tasksCreated       Task[]          @relation("TaskCreator") // Tasks created by this user (PM)
+  tokens             Token[]
+  focusSessions      FocusSession[]
+  logs               Log[]
   projectMemberships ProjectMember[]
-  projectsAsMember Project[] @relation("ProjectMembers")
+  projectsAsMember   Project[]       @relation("ProjectMembers")
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum Role {
@@ -35,9 +37,11 @@ enum Role {
   EMPLOYEE
 }
 
-/* =========================
-   TOKENS (Refresh tokens)
-========================= */
+/**
+ * =========================
+ * TOKENS (Refresh tokens)
+ * =========================
+ */
 model Token {
   id        String    @id @default(uuid())
   token     String    @unique
@@ -48,46 +52,52 @@ model Token {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum TokenType {
   REFRESH
 }
 
-/* =========================
-   PROJECTS
-========================= */
+/**
+ * =========================
+ * PROJECTS
+ * =========================
+ */
 model Project {
-  id          String    @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   description String?
-  pmId        String    // PM owner
+  pmId        String // PM owner
 
-  pm          User      @relation("ProjectOwner", fields: [pmId], references: [id])
-  tasks       Task[]
-  members     User[]    @relation("ProjectMembers") // Employees in project
+  pm             User            @relation("ProjectOwner", fields: [pmId], references: [id])
+  tasks          Task[]
+  members        User[]          @relation("ProjectMembers") // Employees in project
   projectMembers ProjectMember[]
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-/* Many-to-many linking table */
+/**
+ * Many-to-many linking table
+ */
 model ProjectMember {
-  id        String   @id @default(uuid())
+  id        String @id @default(uuid())
   projectId String
   userId    String
 
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 }
 
-/* =========================
-   TASKS
-========================= */
+/**
+ * =========================
+ * TASKS
+ * =========================
+ */
 model Task {
   id          String       @id @default(uuid())
   title       String
@@ -96,18 +106,18 @@ model Task {
   priority    TaskPriority @default(MEDIUM)
   dueDate     DateTime?
 
-  projectId   String
-  assignedTo  String?      // Employee assigned
-  creatorId   String       // PM who created
+  projectId  String
+  assignedTo String? // Employee assigned
+  creatorId  String // PM who created
 
-  project     Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignee    User?        @relation("TaskAssignee", fields: [assignedTo], references: [id])
-  creator     User         @relation("TaskCreator", fields: [creatorId], references: [id])
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee User?   @relation("TaskAssignee", fields: [assignedTo], references: [id])
+  creator  User    @relation("TaskCreator", fields: [creatorId], references: [id])
 
   focusSessions FocusSession[]
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum TaskStatus {
@@ -122,42 +132,48 @@ enum TaskPriority {
   HIGH
 }
 
-/* =========================
-   FOCUS SESSIONS
-========================= */
+/**
+ * =========================
+ * FOCUS SESSIONS
+ * =========================
+ */
 model FocusSession {
-  id          String   @id @default(uuid())
-  userId      String
-  taskId      String?
+  id     String  @id @default(uuid())
+  userId String
+  taskId String?
 
   startTime   DateTime
   endTime     DateTime?
   durationMin Int?
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  task        Task?    @relation(fields: [taskId], references: [id])
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task Task? @relation(fields: [taskId], references: [id])
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
-/* =========================
-   LOGS
-========================= */
+/**
+ * =========================
+ * LOGS (Audit / Activity Log)
+ * =========================
+ */
 model Log {
-  id        String    @id @default(uuid())
-  userId    String?
-  action    LogAction
-  message   String
-  metadata  Json?
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String      // e.g., "TASK_CREATE", "PROJECT_UPDATE"
+  entity     String    // e.g., "Task", "Project", "Auth"
+  entityId   String?     // Specific record affected
+  message    String      // e.g., "Created task (a1b2c3d4...)"
+  ip         String?
+  userAgent  String?
 
-  user      User?     @relation(fields: [userId], references: [id])
-  createdAt DateTime  @default(now())
-}
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-enum LogAction {
-  AUTH
-  TASK
-  PROJECT
-  FOCUS_SESSION
-  ERROR
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([entity])
+  @@index([action])
+  @@index([createdAt(sort: Desc)])
+  @@index([entity, entityId])
 }
