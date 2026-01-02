@@ -15,14 +15,11 @@ import {
 /**
  * Save a token to the database
  */
-export const saveToken = async ({
-  token,
-  userId,
-  expires,
-  type,
-  revoked = false,
-}: SaveTokenInput): Promise<Token> => {
-  const tokenDoc = await prisma.token.create({
+export const saveToken = async (
+  { token, userId, expires, type, revoked = false }: SaveTokenInput,
+  tx = prisma,
+): Promise<Token> => {
+  const tokenDoc = await tx.token.create({
     data: {
       token,
       userId,
@@ -133,6 +130,7 @@ export const generateAuthTokens = async (
 export const generateVerificationToken = async (
   userId: string,
   role: Role,
+  tx: any = prisma,
 ): Promise<TokenResponse> => {
   const verificationTokenExpires = dayjs().add(
     config.jwt.verificationTokenMinutes,
@@ -146,12 +144,15 @@ export const generateVerificationToken = async (
     type: tokenTypes.VERIFICATION,
   });
 
-  await saveToken({
-    token: emailVerificationToken,
-    userId,
-    expires: verificationTokenExpires,
-    type: tokenTypes.VERIFICATION,
-  });
+  await saveToken(
+    {
+      token: emailVerificationToken,
+      userId,
+      expires: verificationTokenExpires,
+      type: tokenTypes.VERIFICATION,
+    },
+    tx,
+  );
 
   return {
     token: emailVerificationToken,

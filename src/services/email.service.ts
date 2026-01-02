@@ -15,7 +15,7 @@ export const sendVerificationEmail = async (
   emailVerificationToken: string,
 ): Promise<void> => {
   try {
-    const verificationUrl = `${config.env === 'production' ? 'https://yourdomain.com' : 'http://localhost:5000'}/auth/verify-email?token=${emailVerificationToken}`;
+    const verificationUrl = `${config.env === 'production' ? 'https://yourdomain.com' : 'http://localhost:5000'}/api/v1/auth/verify-email?token=${emailVerificationToken}`;
 
     const templateName = 'email-verification';
     const context = {

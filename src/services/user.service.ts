@@ -14,7 +14,9 @@ export const isEmailTaken = async (email: string): Promise<boolean> => {
   return !!user;
 };
 
-export const createUser = async (userBody: UserBody): Promise<User> => {
+export const createUser = async (
+  userBody: UserBody,
+): Promise<{ user: User; verificationToken: string }> => {
   if (await isEmailTaken(userBody.email)) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -22,20 +24,26 @@ export const createUser = async (userBody: UserBody): Promise<User> => {
     );
   }
   const { email, password } = userBody;
-  // hash password and create user
-  const hashedPassword = await bcrypt.hash(password, 8);
-  const user = await prisma.user.create({
-    data: {
-      email,
-      password: hashedPassword,
-    },
+  const result = await prisma.$transaction(async (tx) => {
+    // hash password and create user
+    const hashedPassword = await bcrypt.hash(password, 8);
+    const user = await tx.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+      },
+    });
+
+    const verificationDoc = await tokenService.generateVerificationToken(
+      user.id,
+      user.role,
+      tx,
+    );
+
+    return { user, verificationToken: verificationDoc.token };
   });
 
-  const verificationDoc = await tokenService.generateVerificationToken(
-    user.id,
-    user.role,
-  );
-  await sendVerificationEmail(user.email, verificationDoc.token);
+  await sendVerificationEmail(result.user.email, result.verificationToken);
 
-  return user;
+  return result;
 };

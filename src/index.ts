@@ -8,6 +8,7 @@ import { prisma } from './config/prisma'; // your Prisma instance
 import { auditMiddleware } from './middlewares/audit.middleware';
 // import { authMiddleware } from './middlewares/auth.middleware';
 import { errorConverter, errorHandler } from './middlewares/error';
+import authRoutes from './routes/auth.route';
 import ApiError from './utils/ApiError';
 
 // import authRoutes from './routes/auth.routes';
@@ -50,7 +51,7 @@ app.get('/health', (_req, res) => {
 app.use(auditMiddleware);
 
 // API Routes (versioned)
-// app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/auth', authRoutes);
 // app.use('/api/v1/users', userRoutes);
 // app.use('/api/v1/projects', projectRoutes);
 // app.use('/api/v1/tasks', taskRoutes);
