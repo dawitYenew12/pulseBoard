@@ -37,6 +37,41 @@
       "400":
         $ref: '#/components/responses/Error'
 
+/auth/login:
+  post:
+    summary: Login
+    tags: [Auth]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                format: email
+              password:
+                type: string
+                format: password
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user:
+                  $ref: '#/components/schemas/User'
+                tokens:
+                  $ref: '#/components/schemas/AuthTokens'
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+
 /auth/verify-email:
   get:
     summary: Verify user email via query token

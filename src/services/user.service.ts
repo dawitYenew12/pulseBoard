@@ -14,9 +14,22 @@ export const isEmailTaken = async (email: string): Promise<boolean> => {
   return !!user;
 };
 
+import { UserResponse } from '../types/user.types';
+
+export const formatUser = (user: User): UserResponse => {
+  return {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    isVerified: user.isVerified,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+};
+
 export const createUser = async (
   userBody: UserBody,
-): Promise<{ user: User; verificationToken: string }> => {
+): Promise<{ user: UserResponse; verificationToken: string }> => {
   if (await isEmailTaken(userBody.email)) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -40,10 +53,17 @@ export const createUser = async (
       tx,
     );
 
-    return { user, verificationToken: verificationDoc.token };
+    return { user: formatUser(user), verificationToken: verificationDoc.token };
   });
 
   await sendVerificationEmail(result.user.email, result.verificationToken);
 
   return result;
+};
+
+export const getUserByEmail = async (email: string): Promise<User | null> => {
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+  return user;
 };

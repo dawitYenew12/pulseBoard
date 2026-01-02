@@ -7,3 +7,10 @@ export const createUserSchema = {
     password: password,
   }),
 };
+
+export const loginSchema = {
+  body: z.object({
+    email: z.string().email(),
+    password: z.string(),
+  }),
+};
