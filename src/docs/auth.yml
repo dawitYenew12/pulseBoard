@@ -1,0 +1,73 @@
+/auth/signup:
+  post:
+    summary: Register a new user
+    tags: [Auth]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                format: email
+              password:
+                type: string
+                format: password
+                minLength: 8
+                description: At least one number, one letter, and one special character
+    responses:
+      "201":
+        description: Created
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                user:
+                  $ref: '#/components/schemas/User'
+                tokens:
+                  $ref: '#/components/schemas/AuthTokens'
+      "400":
+        $ref: '#/components/responses/Error'
+
+/auth/verify-email:
+  get:
+    summary: Verify user email via query token
+    tags: [Auth]
+    parameters:
+      - in: query
+        name: token
+        required: true
+        schema:
+          type: string
+    responses:
+      "200":
+        description: Email verified successfully
+      "400":
+        $ref: '#/components/responses/Error'
+  post:
+    summary: Verify user email via body token
+    tags: [Auth]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - token
+            properties:
+              token:
+                type: string
+    responses:
+      "200":
+        description: Email verified successfully
+      "400":
+        $ref: '#/components/responses/Error'
