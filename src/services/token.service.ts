@@ -1,9 +1,10 @@
 import jwt from 'jsonwebtoken';
 import dayjs from 'dayjs';
-import { TokenType, Token, Role } from '@prisma/client';
+import { TokenType, Token, Role, PrismaClient } from '@prisma/client';
 import config from '../config/config';
 import { tokenTypes } from '../config/token';
 import { prisma } from '../config/prisma';
+import { aesEncryptContent } from '../utils/encryption';
 import {
   AuthTokensResponse,
   GenerateTokenInput,
@@ -80,36 +81,53 @@ export const generateToken = ({
 /**
  * Generate both access and refresh tokens for authentication
  */
-export const generateAuthTokens = async (
-  userId: string,
-  role: Role,
-): Promise<AuthTokensResponse> => {
+export const generateAuthTokens = async (user: {
+  id: string;
+  email: string;
+  role: Role;
+}): Promise<AuthTokensResponse> => {
   const accessTokenExpires = dayjs().add(
     config.jwt.accessTokenMinutes,
     'minutes',
   );
 
   const accessToken = generateToken({
-    userId,
-    role,
+    userId: user.id,
+    role: user.role,
     expires: accessTokenExpires,
     type: tokenTypes.ACCESS,
   });
 
   const refreshTokenExpires = dayjs().add(config.jwt.refreshTokenDays, 'days');
 
-  const refreshToken = generateToken({
-    userId,
-    role,
-    expires: refreshTokenExpires,
-    type: tokenTypes.REFRESH,
-  });
+  // Refresh Token (now includes role)
+  // Matching user request payload structure
+  const refreshToken = jwt.sign(
+    {
+      id: user.id,
+      email: user.email,
+      role: user.role, // Include role in refresh token
+    },
+    config.jwt.refreshSecret,
+    { expiresIn: '7d' }, // Or use config.jwt.refreshTokenDays
+  );
 
-  await saveToken({
-    token: refreshToken,
-    userId,
-    expires: refreshTokenExpires,
-    type: tokenTypes.REFRESH,
+  // Encrypt and store refresh token
+  const { encryptedContent, iv, salt, authTag } = await aesEncryptContent(
+    refreshToken,
+    user.email + user.id,
+  );
+
+  // Use RefreshToken model
+  await prisma.refreshToken.create({
+    data: {
+      userId: user.id,
+      token: encryptedContent,
+      expiresAt: refreshTokenExpires.toDate(),
+      iv,
+      salt,
+      authTag, // Maps to authTag in model (camelCase)
+    },
   });
 
   return {
@@ -118,7 +136,7 @@ export const generateAuthTokens = async (
       expires: accessTokenExpires.toDate(),
     },
     refresh: {
-      token: refreshToken,
+      token: encryptedContent, // Return encrypted token for cookie
       expires: refreshTokenExpires.toDate(),
     },
   };

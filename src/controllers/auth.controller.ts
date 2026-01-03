@@ -5,15 +5,20 @@ import * as userService from '../services/user.service';
 import * as authService from '../services/auth.service';
 import tokenService from '../services/token.service';
 import emailService from '../services/email.service';
+import config from '../config/config';
 
 export const signup = catchAsync(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   const createdUser = await userService.createUser({ email, password });
 
-  const tokens = await tokenService.generateAuthTokens(
-    createdUser.user.id,
-    createdUser.user.role,
-  );
+  const tokens = await tokenService.generateAuthTokens(createdUser.user);
+
+  res.cookie('refreshToken', tokens.refresh.token, {
+    httpOnly: true,
+    secure: config.env === 'production',
+    sameSite: 'strict',
+    maxAge: config.jwt.refreshTokenDays * 24 * 60 * 60 * 1000,
+  });
 
   res.status(httpStatus.CREATED).json({
     message: `Sent a verification email to ${createdUser.user.email}`,
@@ -27,12 +32,26 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   const user = await authService.loginUserWithEmailAndPassword(email, password);
 
-  const tokens = await tokenService.generateAuthTokens(user.id, user.role);
+  const tokens = await tokenService.generateAuthTokens(user);
+
+  res.cookie('refreshToken', tokens.refresh.token, {
+    httpOnly: true,
+    secure: config.env === 'production',
+    sameSite: 'strict',
+    maxAge: config.jwt.refreshTokenDays * 24 * 60 * 60 * 1000,
+  });
 
   res.status(httpStatus.OK).json({
     user,
     tokens,
   });
+});
+
+export const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const { refreshToken } = req.body;
+  // @ts-ignore
+  const user = await authService.refreshToken(refreshToken);
+  res.status(httpStatus.OK).json({ user });
 });
 
 export const verifyEmail = catchAsync(async (req: Request, res: Response) => {

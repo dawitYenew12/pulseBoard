@@ -67,3 +67,10 @@ export const getUserByEmail = async (email: string): Promise<User | null> => {
   });
   return user;
 };
+
+export const getUserById = async (id: string): Promise<User | null> => {
+  const user = await prisma.user.findUnique({
+    where: { id },
+  });
+  return user;
+};

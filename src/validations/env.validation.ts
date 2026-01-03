@@ -10,6 +10,10 @@ export const envVarSchema = z.object({
   }),
   jwt: z.object({
     JWT_SECRET: z.string().min(1, 'jwt secret is required'),
+    JWT_REFRESH_SECRET: z
+      .string()
+      .min(1, 'jwt refresh secret is required')
+      .default('secret'),
     JWT_ACCESS_EXPIRATION_MINUTES: z.coerce.number().default(15),
     JWT_REFRESH_EXPIRATION_DAYS: z.coerce.number().default(7),
     JWT_VERIFICATION_EXPIRATION_MINUTES: z.coerce.number().default(15),
@@ -28,6 +32,9 @@ export const envVarSchema = z.object({
     EMAIL_CLIENT_SECRET: z.string().min(1, 'email client secret is required'),
     EMAIL_REDIRECT_URI: z.string().url('valid redirect uri is required'),
     EMAIL_REFRESH_TOKEN: z.string().min(1, 'email refresh token is required'),
+  }),
+  encryption: z.object({
+    MASTER_KEY: z.string().min(1, 'master key is required'),
   }),
 });
 
