@@ -80,6 +80,7 @@ enum TokenType {
   ACCESS
   REFRESH
   VERIFICATION
+  RESET_PASSWORD
 }
 
 /**

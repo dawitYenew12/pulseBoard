@@ -20,6 +20,8 @@ const parsed = envVarSchema.safeParse({
     JWT_REFRESH_EXPIRATION_DAYS: process.env.JWT_REFRESH_EXPIRATION_DAYS,
     JWT_VERIFICATION_EXPIRATION_MINUTES:
       process.env.JWT_VERIFICATION_EXPIRATION_MINUTES,
+    JWT_RESET_PASSWORD_EXPIRATION_MINUTES:
+      process.env.JWT_RESET_PASSWORD_EXPIRATION_MINUTES,
   },
   cors: {
     CORS_ORIGIN: process.env.CORS_ORIGIN,
@@ -59,6 +61,7 @@ interface Config {
     accessTokenMinutes: number;
     refreshTokenDays: number;
     verificationTokenMinutes: number;
+    resetPasswordTokenMinutes: number;
   };
   email: {
     user: string;
@@ -86,6 +89,8 @@ const config: Config = {
     accessTokenMinutes: envVars.jwt.JWT_ACCESS_EXPIRATION_MINUTES,
     refreshTokenDays: envVars.jwt.JWT_REFRESH_EXPIRATION_DAYS,
     verificationTokenMinutes: envVars.jwt.JWT_VERIFICATION_EXPIRATION_MINUTES,
+    resetPasswordTokenMinutes:
+      envVars.jwt.JWT_RESET_PASSWORD_EXPIRATION_MINUTES,
   },
   email: {
     user: envVars.email.EMAIL_USER,

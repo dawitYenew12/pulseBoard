@@ -178,9 +178,42 @@ export const generateVerificationToken = async (
   };
 };
 
+/**
+ * Generate a reset password token
+ */
+export const generateResetPasswordToken = async (
+  userId: string,
+  role: Role,
+): Promise<TokenResponse> => {
+  const resetPasswordTokenExpires = dayjs().add(
+    config.jwt.resetPasswordTokenMinutes,
+    'minutes',
+  );
+
+  const resetPasswordToken = generateToken({
+    userId,
+    role,
+    expires: resetPasswordTokenExpires,
+    type: tokenTypes.RESET_PASSWORD,
+  });
+
+  await saveToken({
+    token: resetPasswordToken,
+    userId,
+    expires: resetPasswordTokenExpires,
+    type: tokenTypes.RESET_PASSWORD,
+  });
+
+  return {
+    token: resetPasswordToken,
+    expires: resetPasswordTokenExpires.toDate(),
+  };
+};
+
 const tokenService = {
   generateAuthTokens,
   generateVerificationToken,
+  generateResetPasswordToken,
   verifyToken,
   saveToken,
   generateToken,

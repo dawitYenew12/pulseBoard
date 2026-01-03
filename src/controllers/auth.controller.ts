@@ -74,3 +74,21 @@ export const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   await emailService.verifyEmail(token);
   res.status(httpStatus.OK).json({ message: 'Email verified successfully' });
 });
+
+export const forgotPassword = catchAsync(
+  async (req: Request, res: Response) => {
+    const { email } = req.body;
+    await authService.forgotPassword(email);
+    res.status(httpStatus.OK).json({
+      message: 'If the email exists, a password reset link has been sent',
+    });
+  },
+);
+
+export const resetPassword = catchAsync(async (req: Request, res: Response) => {
+  const { token, password } = req.body;
+  await emailService.resetPassword(token, password);
+  res
+    .status(httpStatus.OK)
+    .json({ message: 'Password reset successfully. You can now log in.' });
+});

@@ -127,10 +127,106 @@ export const resendVerificationEmail = async (
   await sendVerificationEmail(user.email, verificationDoc.token);
 };
 
+/**
+ * Send password reset email to user
+ */
+export const sendPasswordResetEmail = async (
+  receiverEmail: string,
+  resetToken: string,
+): Promise<void> => {
+  try {
+    const resetUrl = `${config.env === 'production' ? 'https://yourdomain.com' : 'http://localhost:5000'}/api/v1/auth/reset-password?token=${resetToken}`;
+
+    const templateName = 'password-reset';
+    const context = {
+      customName: 'User', // You can make this dynamic by passing username
+      resetUrl,
+    };
+
+    const html = await renderTemplate(templateName, context);
+    const transporter = await getTransporter();
+
+    const mailOptions = {
+      from: `PulseBoard <${config.email.user}>`,
+      to: receiverEmail,
+      subject: 'Password Reset Request - PulseBoard',
+      html,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    logger.info(`Password reset email sent to: ${receiverEmail}`);
+  } catch (error) {
+    logger.error('Error sending password reset email:', error);
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Error sending password reset email',
+    );
+  }
+};
+
+/**
+ * Reset user password using reset token
+ */
+export const resetPassword = async (
+  token: string,
+  newPassword: string,
+): Promise<void> => {
+  if (!token) {
+    throw new ApiError(httpStatus.UNPROCESSABLE_ENTITY, 'Token is required');
+  }
+
+  try {
+    // Verify the token exists in database and is valid
+    const tokenDoc = await tokenService.verifyToken(
+      token,
+      TokenType.RESET_PASSWORD,
+    );
+
+    // Get the user
+    const user = await prisma.user.findUnique({
+      where: { id: tokenDoc.userId },
+    });
+
+    if (!user) {
+      throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+    }
+
+    // Hash the new password
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update user password
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedPassword },
+    });
+
+    // Delete the reset token after successful password reset
+    await prisma.token.delete({
+      where: { id: tokenDoc.id },
+    });
+
+    logger.info(`Password reset successfully for user: ${user.email}`);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+
+    logger.error('Error resetting password:', error);
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      'Invalid or expired reset token',
+    );
+  }
+};
+
 const emailService = {
   sendVerificationEmail,
   verifyEmail,
   resendVerificationEmail,
+  sendPasswordResetEmail,
+  resetPassword,
 };
 
 export default emailService;

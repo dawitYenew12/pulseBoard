@@ -17,6 +17,7 @@ export const envVarSchema = z.object({
     JWT_ACCESS_EXPIRATION_MINUTES: z.coerce.number().default(15),
     JWT_REFRESH_EXPIRATION_DAYS: z.coerce.number().default(7),
     JWT_VERIFICATION_EXPIRATION_MINUTES: z.coerce.number().default(15),
+    JWT_RESET_PASSWORD_EXPIRATION_MINUTES: z.coerce.number().default(10),
   }),
   cors: z.object({
     CORS_ORIGIN: z.string().min(1, 'cors origin is required'),

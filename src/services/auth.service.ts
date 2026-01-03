@@ -78,3 +78,26 @@ export const refreshAuthTokens = async (
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
   }
 };
+
+/**
+ * Request password reset - generates token and sends email
+ */
+export const forgotPassword = async (email: string): Promise<void> => {
+  const user = await userService.getUserByEmail(email);
+
+  if (!user) {
+    // Don't reveal if user exists or not for security reasons
+    // Just return success to prevent email enumeration attacks
+    return;
+  }
+
+  // Generate reset password token
+  const resetTokenDoc = await tokenService.generateResetPasswordToken(
+    user.id,
+    user.role,
+  );
+
+  // Send password reset email
+  const emailService = require('./email.service').default;
+  await emailService.sendPasswordResetEmail(user.email, resetTokenDoc.token);
+};
