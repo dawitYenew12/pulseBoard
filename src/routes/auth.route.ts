@@ -14,12 +14,33 @@ import {
   resetPassword,
 } from '../controllers/auth.controller';
 
+import {
+  loginRateLimiter,
+  signupRateLimiter,
+  forgotPasswordLimiter,
+  resetPasswordLimiter,
+  verifyEmailLimiter,
+} from '../middlewares/auth.limiter';
+
 const router = express.Router();
 
-router.post('/signup', validate(createUserSchema), signup);
-router.post('/login', validate(loginSchema), login);
-router.route('/verify-email').get(verifyEmail).post(verifyEmail);
-router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword);
-router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
+router.post('/signup', signupRateLimiter, validate(createUserSchema), signup);
+router.post('/login', loginRateLimiter, validate(loginSchema), login);
+router
+  .route('/verify-email')
+  .get(verifyEmailLimiter, verifyEmail)
+  .post(verifyEmailLimiter, verifyEmail);
+router.post(
+  '/forgot-password',
+  forgotPasswordLimiter,
+  validate(forgotPasswordSchema),
+  forgotPassword,
+);
+router.post(
+  '/reset-password',
+  resetPasswordLimiter,
+  validate(resetPasswordSchema),
+  resetPassword,
+);
 
 export default router;

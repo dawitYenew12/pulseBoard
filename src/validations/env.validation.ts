@@ -37,6 +37,13 @@ export const envVarSchema = z.object({
   encryption: z.object({
     MASTER_KEY: z.string().min(1, 'master key is required'),
   }),
+  rateLimit: z.object({
+    MAX_ATTEMPTS_BY_IP_PER_DAY: z.coerce.number().default(50),
+    MAX_CONSECUTIVE_FAILS_BY_EMAIL_AND_IP: z.coerce.number().default(10),
+    MAX_CONSECUTIVE_FAILS_BY_EMAIL: z.coerce.number().default(5),
+    API_RATE_LIMIT_WINDOW_MINUTES: z.coerce.number().default(15),
+    API_RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(100),
+  }),
 });
 
 export type EnvVars = z.infer<typeof envVarSchema>;

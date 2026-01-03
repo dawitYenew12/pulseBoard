@@ -48,7 +48,10 @@ app.get('/health', (_req, res) => {
   });
 });
 
+import { apiLimiter } from './middlewares/api.limiter';
+
 // app.use(authMiddleware);
+app.use(apiLimiter);
 app.use(auditMiddleware);
 
 // API Routes (versioned)

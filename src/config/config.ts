@@ -39,6 +39,14 @@ const parsed = envVarSchema.safeParse({
   encryption: {
     MASTER_KEY: process.env.MASTER_KEY,
   },
+  rateLimit: {
+    MAX_ATTEMPTS_BY_IP_PER_DAY: process.env.MAX_ATTEMPTS_BY_IP_PER_DAY,
+    MAX_CONSECUTIVE_FAILS_BY_EMAIL_AND_IP:
+      process.env.MAX_CONSECUTIVE_FAILS_BY_EMAIL_AND_IP,
+    MAX_CONSECUTIVE_FAILS_BY_EMAIL: process.env.MAX_CONSECUTIVE_FAILS_BY_EMAIL,
+    API_RATE_LIMIT_WINDOW_MINUTES: process.env.API_RATE_LIMIT_WINDOW_MINUTES,
+    API_RATE_LIMIT_MAX_REQUESTS: process.env.API_RATE_LIMIT_MAX_REQUESTS,
+  },
 });
 if (!parsed.success) {
   throw new ApiError(
@@ -73,6 +81,13 @@ interface Config {
   encryption: {
     masterKey: string;
   };
+  rateLimit: {
+    ipMaxAttemptsPerDay: number;
+    emailIpMaxFails: number;
+    emailMaxFails: number;
+    windowMinutes: number;
+    maxRequests: number;
+  };
 }
 
 const config: Config = {
@@ -101,6 +116,13 @@ const config: Config = {
   },
   encryption: {
     masterKey: envVars.encryption.MASTER_KEY,
+  },
+  rateLimit: {
+    ipMaxAttemptsPerDay: envVars.rateLimit.MAX_ATTEMPTS_BY_IP_PER_DAY,
+    emailIpMaxFails: envVars.rateLimit.MAX_CONSECUTIVE_FAILS_BY_EMAIL_AND_IP,
+    emailMaxFails: envVars.rateLimit.MAX_CONSECUTIVE_FAILS_BY_EMAIL,
+    windowMinutes: envVars.rateLimit.API_RATE_LIMIT_WINDOW_MINUTES,
+    maxRequests: envVars.rateLimit.API_RATE_LIMIT_MAX_REQUESTS,
   },
 };
 
