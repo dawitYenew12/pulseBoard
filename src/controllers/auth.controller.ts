@@ -47,12 +47,27 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-export const refreshToken = catchAsync(async (req: Request, res: Response) => {
-  const { refreshToken } = req.body;
-  // @ts-ignore
-  const user = await authService.refreshToken(refreshToken);
-  res.status(httpStatus.OK).json({ user });
-});
+export const refreshAuthTokens = catchAsync(
+  async (req: Request, res: Response) => {
+    const encryptedRefreshToken = req.cookies.refreshToken;
+
+    if (!encryptedRefreshToken) {
+      throw new Error('Refresh token not found in cookies');
+    }
+
+    const tokens = await authService.refreshAuthTokens(encryptedRefreshToken);
+
+    // Set the new encrypted refresh token cookie
+    res.cookie('refreshToken', tokens.refresh.token, {
+      httpOnly: true,
+      secure: config.env === 'production',
+      sameSite: 'strict',
+      maxAge: config.jwt.refreshTokenDays * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(httpStatus.OK).json({ tokens });
+  },
+);
 
 export const verifyEmail = catchAsync(async (req: Request, res: Response) => {
   const token = (req.query.token as string) || req.body.token;
