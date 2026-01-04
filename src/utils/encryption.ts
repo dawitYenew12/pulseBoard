@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 import { promisify } from 'util';
 import config from '../config/config';
+import ApiError from '../utils/ApiError';
+import httpStatus from 'http-status';
 
 const randomBytes = promisify(crypto.randomBytes);
 
@@ -96,8 +98,10 @@ export function aesDecryptContent(
 
     return decryptedContent.toString('utf8');
   } catch (error: any) {
-    // Log the error for debugging
     console.error(`Decryption failed: ${error.message}`);
-    throw new Error('Decryption failed. Invalid or corrupted data.');
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      'Decryption failed. Invalid or corrupted data.',
+    );
   }
 }

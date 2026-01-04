@@ -80,7 +80,7 @@ export const verifyEmail = async (token: string): Promise<void> => {
       data: { isVerified: true },
     });
 
-    // Optional: Delete the verification token after successful verification
+    // Delete the verification token after successful verification
     await prisma.token.delete({
       where: { id: tokenDoc.id },
     });

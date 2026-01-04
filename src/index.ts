@@ -14,7 +14,7 @@ import ApiError from './utils/ApiError';
 
 // import authRoutes from './routes/auth.routes';
 // import userRoutes from './routes/user.routes';
-// import projectRoutes from './routes/project.routes';
+import projectRoutes from './routes/project.route';
 // import taskRoutes from './routes/task.routes';
 // import focusSessionRoutes from './routes/focus-session.routes';
 // Add more routes as you create them
@@ -58,7 +58,7 @@ app.use(auditMiddleware);
 app.use('/api/v1/docs', docsRoutes);
 app.use('/api/v1/auth', authRoutes);
 // app.use('/api/v1/users', userRoutes);
-// app.use('/api/v1/projects', projectRoutes);
+app.use('/api/v1/projects', projectRoutes);
 // app.use('/api/v1/tasks', taskRoutes);
 // app.use('/api/v1/focus-sessions', focusSessionRoutes);
 

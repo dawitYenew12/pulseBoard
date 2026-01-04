@@ -1,0 +1,63 @@
+import httpStatus from 'http-status';
+import pick from '../utils/pick';
+import ApiError from '../utils/ApiError';
+import { catchAsync } from '../utils/CatchAsync';
+import * as projectService from '../services/project.service';
+import { Request, Response } from 'express';
+
+export const createProject = catchAsync(async (req: Request, res: Response) => {
+  const project = await projectService.createProject(req.body);
+  res.status(httpStatus.CREATED).send(project);
+});
+
+export const getProjects = catchAsync(async (req: Request, res: Response) => {
+  const filter = pick(req.query, ['name']);
+  const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  const result = await projectService.queryProjects(filter, options);
+  res.send(result);
+});
+
+export const getProject = catchAsync(async (req: Request, res: Response) => {
+  const project = await projectService.getProjectById(req.params.projectId);
+  if (!project) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Project not found');
+  }
+  res.send(project);
+});
+
+export const updateProject = catchAsync(async (req: Request, res: Response) => {
+  const project = await projectService.updateProjectById(
+    req.params.projectId,
+    req.body,
+  );
+  res.send(project);
+});
+
+export const deleteProject = catchAsync(async (req: Request, res: Response) => {
+  await projectService.deleteProjectById(req.params.projectId);
+  res.status(httpStatus.NO_CONTENT).send();
+});
+
+export const assignPm = catchAsync(async (req: Request, res: Response) => {
+  const project = await projectService.assignPmToProject(
+    req.params.projectId,
+    req.body.pmId,
+  );
+  res.send(project);
+});
+
+export const addMember = catchAsync(async (req: Request, res: Response) => {
+  await projectService.addMemberToProject(
+    req.params.projectId,
+    req.body.userId,
+  );
+  res.status(httpStatus.CREATED).send({ message: 'Member added successfully' });
+});
+
+export const removeMember = catchAsync(async (req: Request, res: Response) => {
+  await projectService.removeMemberFromProject(
+    req.params.projectId,
+    req.params.userId,
+  );
+  res.status(httpStatus.NO_CONTENT).send();
+});

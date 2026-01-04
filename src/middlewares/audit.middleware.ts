@@ -10,21 +10,21 @@ const SENSITIVE_FIELDS = [
   'refreshToken',
 ];
 
-function maskSensitive(data: any): any {
-  if (!data || typeof data !== 'object') return data;
-  if (Array.isArray(data)) return data.map(maskSensitive);
+// function maskSensitive(data: any): any {
+//   if (!data || typeof data !== 'object') return data;
+//   if (Array.isArray(data)) return data.map(maskSensitive);
 
-  const cleaned = { ...data };
-  Object.keys(cleaned).forEach((key) => {
-    const lowerKey = key.toLowerCase();
-    if (SENSITIVE_FIELDS.some((f) => lowerKey.includes(f))) {
-      cleaned[key] = '***MASKED***';
-    } else if (typeof cleaned[key] === 'object' && cleaned[key] !== null) {
-      cleaned[key] = maskSensitive(cleaned[key]);
-    }
-  });
-  return cleaned;
-}
+//   const cleaned = { ...data };
+//   Object.keys(cleaned).forEach((key) => {
+//     const lowerKey = key.toLowerCase();
+//     if (SENSITIVE_FIELDS.some((f) => lowerKey.includes(f))) {
+//       cleaned[key] = '***MASKED***';
+//     } else if (typeof cleaned[key] === 'object' && cleaned[key] !== null) {
+//       cleaned[key] = maskSensitive(cleaned[key]);
+//     }
+//   });
+//   return cleaned;
+// }
 
 const ROUTE_ENTITY_MAP: Record<string, string> = {
   '/api/projects': 'Project',

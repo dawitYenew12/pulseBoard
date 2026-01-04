@@ -16,8 +16,4 @@ export const apiLimiter = rateLimit({
       ),
     );
   },
-  skip: (req) => {
-    // Skip rate limiting for health check
-    return req.path === '/health';
-  },
 });
