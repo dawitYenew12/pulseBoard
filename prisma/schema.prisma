@@ -71,10 +71,10 @@ model Project {
   id             String          @id @default(uuid())
   name           String
   description    String?
-  pmId           String
+  pmId           String?
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
-  pm             User            @relation("ProjectOwner", fields: [pmId], references: [id])
+  pm             User?           @relation("ProjectOwner", fields: [pmId], references: [id])
   projectMembers ProjectMember[]
   tasks          Task[]
   members        User[]          @relation("ProjectMembers")

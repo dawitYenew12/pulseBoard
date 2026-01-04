@@ -29,7 +29,13 @@ export const validate =
       return next(new ApiError(httpStatus.BAD_REQUEST, errorMessage));
     }
 
-    Object.assign(req, data);
+    Object.keys(data).forEach((key) => {
+      Object.defineProperty(req, key, {
+        value: data[key],
+        writable: true,
+        configurable: true,
+      });
+    });
 
     return next();
   };

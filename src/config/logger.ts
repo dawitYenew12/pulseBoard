@@ -10,27 +10,39 @@ interface Config {
 const configTyped: Config = config;
 
 const winstonFormat = printf(
-  ({ level, message, timestamp, stack }: winston.Logform.TransformableInfo) => {
-    return `${timestamp}: ${level}: ${stack || message}`;
+  ({
+    level,
+    message,
+    timestamp,
+    stack,
+    ...metadata
+  }: winston.Logform.TransformableInfo) => {
+    const metaStr =
+      metadata && Object.keys(metadata).length
+        ? `\n${JSON.stringify(metadata, null, 2)}`
+        : '';
+    return `${timestamp}: ${level}: ${stack || message}${metaStr}`;
   },
 );
 
 const logger: Logger = createLogger({
   level: configTyped.env === 'production' ? 'info' : 'debug',
-  format: combine(
-    timestamp(),
-    configTyped.env === 'production'
-      ? winstonFormat
-      : combine(colorize(), winstonFormat),
-  ),
+  format: combine(timestamp(), format.errors({ stack: true })),
   transports: [
-    new transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new transports.File({ filename: 'logs/combined.log' }),
+    new transports.File({
+      filename: 'logs/error.log',
+      level: 'error',
+      format: winstonFormat,
+    }),
+    new transports.File({
+      filename: 'logs/combined.log',
+      format: winstonFormat,
+    }),
     new transports.Console({
       format:
         configTyped.env === 'production'
-          ? combine(timestamp(), json())
-          : combine(colorize(), winston.format.simple()),
+          ? combine(json())
+          : combine(colorize(), winstonFormat),
     }),
   ],
 });
