@@ -1,0 +1,273 @@
+/tasks:
+  post:
+    summary: Create a task
+    description: Only SUPERADMIN or PM can create tasks.
+    tags: [Tasks]
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - title
+              - projectId
+            properties:
+              title:
+                type: string
+              description:
+                type: string
+              priority:
+                type: string
+                enum: [LOW, MEDIUM, HIGH]
+              dueDate:
+                type: string
+                format: date-time
+              projectId:
+                type: string
+                format: uuid
+              assignedTo:
+                type: string
+                format: uuid
+    responses:
+      "201":
+        description: Created
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+      "403":
+        $ref: '#/components/responses/Forbidden'
+  get:
+    summary: Get all tasks
+    description: Retrieve tasks with filters.
+    tags: [Tasks]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: query
+        name: projectId
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: assignedTo
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum: [TODO, IN_PROGRESS, DONE]
+      - in: query
+        name: priority
+        schema:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+      - in: query
+        name: sortBy
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 10
+      - in: query
+        name: page
+        schema:
+          type: integer
+          default: 1
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Task'
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                totalPages:
+                  type: integer
+                  example: 1
+                totalResults:
+                  type: integer
+                  example: 1
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+
+/tasks/{taskId}:
+  get:
+    summary: Get a task
+    tags: [Tasks]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: taskId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+      "404":
+        $ref: '#/components/responses/NotFound'
+  patch:
+    summary: Update a task
+    tags: [Tasks]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: taskId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+              description:
+                type: string
+              status:
+                type: string
+                enum: [TODO, IN_PROGRESS, DONE]
+              priority:
+                type: string
+                enum: [LOW, MEDIUM, HIGH]
+              dueDate:
+                type: string
+                format: date-time
+              assignedTo:
+                type: string
+                format: uuid
+                nullable: true
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+      "403":
+        $ref: '#/components/responses/Forbidden'
+      "404":
+        $ref: '#/components/responses/NotFound'
+  delete:
+    summary: Delete a task
+    description: Only SUPERADMIN or PM can delete tasks.
+    tags: [Tasks]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: taskId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "204":
+        description: No Content
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+      "403":
+        $ref: '#/components/responses/Forbidden'
+      "404":
+        $ref: '#/components/responses/NotFound'
+
+/tasks/{taskId}/claim:
+  post:
+    summary: Claim a task
+    description: Any project member can claim a task.
+    tags: [Tasks]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: taskId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: OK
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+      "403":
+        $ref: '#/components/responses/Forbidden'
+
+/tasks/{taskId}/approve-claim:
+  post:
+    summary: Approve task claim
+    description: SUPERADMIN or PM can approve task claim.
+    tags: [Tasks]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: taskId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: OK
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+      "403":
+        $ref: '#/components/responses/Forbidden'
+
+/tasks/{taskId}/reject-claim:
+  post:
+    summary: Reject task claim
+    description: SUPERADMIN or PM can reject task claim.
+    tags: [Tasks]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: taskId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: OK
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+      "403":
+        $ref: '#/components/responses/Forbidden'
