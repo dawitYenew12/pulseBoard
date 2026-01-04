@@ -74,3 +74,67 @@ export const getUserById = async (id: string): Promise<User | null> => {
   });
   return user;
 };
+
+/**
+ * Query for users
+ * @param {Object} filter - Prisma filter
+ * @param {Object} options - Query options
+ * @param {string} [options.sortBy] - Sort option in the format: sortField:(desc|asc)
+ * @param {number} [options.limit] - Maximum number of results per page (default = 10)
+ * @param {number} [options.page] - Current page (default = 1)
+ * @returns {Promise<UserResponse[]>}
+ */
+export const queryUsers = async (
+  filter: any,
+  options: {
+    limit?: number;
+    page?: number;
+    sortBy?: string;
+  },
+): Promise<UserResponse[]> => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
+  const skip = (page - 1) * limit;
+
+  const orderBy: any = {};
+  if (options.sortBy) {
+    const [field, direction] = options.sortBy.split(':');
+    if (field && direction) {
+      orderBy[field] = direction;
+    }
+  } else {
+    orderBy.createdAt = 'desc';
+  }
+
+  const users = await prisma.user.findMany({
+    where: filter,
+    skip,
+    take: limit,
+    orderBy,
+  });
+
+  return users.map(formatUser);
+};
+
+/**
+ * Update user role
+ * @param {string} userId
+ * @param {Role} role
+ * @returns {Promise<UserResponse>}
+ */
+export const updateUserRole = async (
+  userId: string,
+  role: User['role'],
+): Promise<UserResponse> => {
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: { role },
+  });
+
+  return formatUser(updatedUser);
+};

@@ -167,6 +167,7 @@ enum TokenType {
 
 enum TaskStatus {
   TODO
+  PENDING_APPROVAL
   IN_PROGRESS
   DONE
 }

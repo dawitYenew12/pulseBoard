@@ -1,5 +1,5 @@
 import httpStatus from 'http-status';
-import { Project, Prisma } from '@prisma/client';
+import { Project, Prisma, Role } from '@prisma/client';
 import { prisma } from '../config/prisma';
 import ApiError from '../utils/ApiError';
 import { CreateProjectBody, UpdateProjectBody } from '../types/project.types';
@@ -117,6 +117,50 @@ export const updateProjectById = async (
 };
 
 /**
+/**
+ * Check if user can access a project
+ * @param {string} projectId
+ * @param {string} userId
+ * @param {string} userRole
+ * @returns {Promise<boolean>}
+ */
+export const canUserAccessProject = async (
+  projectId: string,
+  userId: string,
+  userRole: string,
+): Promise<boolean> => {
+  // SUPERADMIN can access all projects
+  if (userRole === Role.SUPERADMIN) {
+    return true;
+  }
+
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    include: {
+      projectMembers: {
+        where: { userId },
+      },
+    },
+  });
+
+  if (!project) {
+    return false;
+  }
+
+  // PM can access if they are assigned to the project
+  if (userRole === Role.PM && project.pmId === userId) {
+    return true;
+  }
+
+  // EMPLOYEE can access if they are a member
+  if (project.projectMembers.length > 0) {
+    return true;
+  }
+
+  return false;
+};
+
+/**
  * Delete project by id
  * @param {string} projectId
  * @returns {Promise<Project>}
@@ -149,19 +193,19 @@ export const assignPmToProject = async (
     throw new ApiError(httpStatus.NOT_FOUND, 'Project not found');
   }
 
-  // Verify PM exists and has PM role
+  // Verify PM exists and has appropriate role
   const pm = await prisma.user.findUnique({
     where: { id: pmId },
   });
 
   if (!pm) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'PM user not found');
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
 
-  if (pm.role !== 'PM' && pm.role !== 'SUPERADMIN') {
+  if (pm.role !== Role.PM && pm.role !== Role.SUPERADMIN) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      'User must have PM or SUPERADMIN role',
+      'Invalid user for this operation',
     );
   }
 

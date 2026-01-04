@@ -10,13 +10,12 @@ import { auditMiddleware } from './middlewares/audit.middleware';
 import { errorConverter, errorHandler } from './middlewares/error';
 import authRoutes from './routes/auth.route';
 import docsRoutes from './routes/docs.route';
+import projectRoutes from './routes/project.route';
+import userRoutes from './routes/user.route';
 import ApiError from './utils/ApiError';
 
-// import authRoutes from './routes/auth.routes';
-// import userRoutes from './routes/user.routes';
-import projectRoutes from './routes/project.route';
-// import taskRoutes from './routes/task.routes';
-// import focusSessionRoutes from './routes/focus-session.routes';
+import taskRoutes from './routes/task.route';
+import focusSessionRoutes from './routes/focus-session.route';
 // Add more routes as you create them
 
 const app = express();
@@ -57,10 +56,10 @@ app.use(auditMiddleware);
 // API Routes (versioned)
 app.use('/api/v1/docs', docsRoutes);
 app.use('/api/v1/auth', authRoutes);
-// app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/projects', projectRoutes);
-// app.use('/api/v1/tasks', taskRoutes);
-// app.use('/api/v1/focus-sessions', focusSessionRoutes);
+app.use('/api/v1/tasks', taskRoutes);
+app.use('/api/v1/focus-sessions', focusSessionRoutes);
 
 // Catch 404
 app.use((_req, _res, next) => {

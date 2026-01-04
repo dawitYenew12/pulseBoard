@@ -18,6 +18,8 @@ export const getProjects = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getProject = catchAsync(async (req: Request, res: Response) => {
+  // Access control handled by canAccessProject middleware
+  // We re-fetch to get all relations formatted as per service
   const project = await projectService.getProjectById(req.params.projectId);
   if (!project) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Project not found');
@@ -26,6 +28,7 @@ export const getProject = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const updateProject = catchAsync(async (req: Request, res: Response) => {
+  // Access control handled by canAccessProject middleware
   const project = await projectService.updateProjectById(
     req.params.projectId,
     req.body,
@@ -34,11 +37,13 @@ export const updateProject = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const deleteProject = catchAsync(async (req: Request, res: Response) => {
+  // Access control handled by canAccessProject middleware
   await projectService.deleteProjectById(req.params.projectId);
   res.status(httpStatus.NO_CONTENT).send();
 });
 
 export const assignPm = catchAsync(async (req: Request, res: Response) => {
+  // Access control handled by canAccessProject middleware
   const project = await projectService.assignPmToProject(
     req.params.projectId,
     req.body.pmId,
@@ -47,6 +52,7 @@ export const assignPm = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const addMember = catchAsync(async (req: Request, res: Response) => {
+  // Access control handled by canAccessProject middleware
   await projectService.addMemberToProject(
     req.params.projectId,
     req.body.userId,
@@ -55,6 +61,7 @@ export const addMember = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const removeMember = catchAsync(async (req: Request, res: Response) => {
+  // Access control handled by canAccessProject middleware
   await projectService.removeMemberFromProject(
     req.params.projectId,
     req.params.userId,
