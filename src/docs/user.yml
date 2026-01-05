@@ -15,7 +15,7 @@
         name: role
         schema:
           type: string
-          enum: [USER, ADMIN, PM, DOCTOR, HR, SUPERADMIN]
+          enum: [SUPERADMIN, PM, EMPLOYEE]
         description: User role
       - in: query
         name: sortBy
@@ -118,7 +118,7 @@
             properties:
               role:
                 type: string
-                enum: [SUPERADMIN, PM, EMPLOYEE, USER, ADMIN]
+                enum: [SUPERADMIN, PM, EMPLOYEE]
     responses:
       "200":
         description: OK

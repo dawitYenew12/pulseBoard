@@ -5,19 +5,28 @@ components:
       properties:
         id:
           type: string
+          format: uuid
         email:
           type: string
           format: email
         role:
           type: string
-          enum: [USER, ADMIN]
+          enum: [SUPERADMIN, PM, EMPLOYEE]
         isVerified:
           type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
       example:
-        id: 507f1f77bcf86cd799439011
+        id: 507f1f77-bcf8-4cd7-9943-9011
         email: fake@example.com
-        role: USER
+        role: EMPLOYEE
         isVerified: false
+        createdAt: "2023-01-01T00:00:00Z"
+        updatedAt: "2023-01-01T00:00:00Z"
 
     AuthTokens:
       type: object

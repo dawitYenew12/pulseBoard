@@ -250,6 +250,101 @@
         $ref: '#/components/responses/Unauthorized'
       "403":
         $ref: '#/components/responses/Forbidden'
+  get:
+    summary: Get members of a project
+    description: Anyone who can access the project can list its members.
+    tags: [Projects]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: projectId
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+      "403":
+        $ref: '#/components/responses/Forbidden'
+      "404":
+        $ref: '#/components/responses/NotFound'
+
+/projects/{projectId}/tasks:
+  get:
+    summary: Get tasks of a project
+    description: Anyone who can access the project can list its tasks.
+    tags: [Projects]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: projectId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: assignedTo
+        schema:
+          type: string
+          format: uuid
+        description: Filter by assignee ID
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum: [TODO, IN_PROGRESS, DONE]
+        description: Filter by status
+      - in: query
+        name: priority
+        schema:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        description: Filter by priority
+      - in: query
+        name: sortBy
+        schema:
+          type: string
+        description: sort by query in the form of field:desc/asc (ex. title:asc)
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          minimum: 1
+        default: 10
+        description: Maximum number of tasks
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+        default: 1
+        description: Page number
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Task'
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+      "403":
+        $ref: '#/components/responses/Forbidden'
+      "404":
+        $ref: '#/components/responses/NotFound'
 
 /projects/{projectId}/members/{userId}:
   delete:

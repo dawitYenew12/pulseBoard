@@ -1,7 +1,10 @@
 import express from 'express';
 import { validate } from '../middlewares/validate';
 import * as projectValidation from '../validations/project.validation';
+import * as taskValidation from '../validations/task.validation';
 import * as projectController from '../controllers/project.controller';
+import * as userController from '../controllers/user.controller';
+import * as taskController from '../controllers/task.controller';
 import { auth } from '../middlewares/auth.middleware';
 import { canAccessProject } from '../middlewares/authorization.middleware';
 import { Role } from '@prisma/client';
@@ -61,7 +64,21 @@ router
     canAccessProject(),
     validate(projectValidation.addMember),
     projectController.addMember,
+  )
+  .get(
+    auth(),
+    canAccessProject(),
+    validate(projectValidation.getProjectMembers),
+    userController.getProjectMembers,
   );
+
+router.get(
+  '/:projectId/tasks',
+  auth(),
+  canAccessProject(),
+  validate(taskValidation.getProjectTasks),
+  taskController.getProjectTasks,
+);
 
 router
   .route('/:projectId/members/:userId')

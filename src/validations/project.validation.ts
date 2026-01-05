@@ -68,3 +68,8 @@ export const removeMember = {
     userId: z.string().uuid(),
   }),
 };
+export const getProjectMembers = {
+  params: z.object({
+    projectId: z.string().uuid(),
+  }),
+};

@@ -119,3 +119,17 @@ export const deleteTask = catchAsync(async (req: Request, res: Response) => {
   await taskService.deleteTaskById(req.params.taskId);
   res.status(httpStatus.NO_CONTENT).send();
 });
+
+export const getProjectTasks = catchAsync(
+  async (req: Request, res: Response) => {
+    const filter = pick(req.query, ['assignedTo', 'status', 'priority']);
+    const options = pick(req.query, ['sortBy', 'limit', 'page']);
+    const { projectId } = req.params;
+
+    const result = await taskService.queryTasks(
+      { ...filter, projectId },
+      options,
+    );
+    res.send(result);
+  },
+);

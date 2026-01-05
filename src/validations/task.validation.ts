@@ -53,3 +53,17 @@ export const deleteTask = {
     taskId: z.string().uuid(),
   }),
 };
+
+export const getProjectTasks = {
+  params: z.object({
+    projectId: z.string().uuid(),
+  }),
+  query: z.object({
+    assignedTo: z.string().uuid().optional(),
+    status: z.nativeEnum(TaskStatus).optional(),
+    priority: z.nativeEnum(TaskPriority).optional(),
+    sortBy: z.string().optional(),
+    limit: z.number().int().positive().optional(),
+    page: z.number().int().positive().optional(),
+  }),
+};
