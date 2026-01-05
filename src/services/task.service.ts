@@ -318,3 +318,50 @@ export const deleteTaskById = async (taskId: string): Promise<Task> => {
     where: { id: taskId },
   });
 };
+
+/**
+ * Get claimed tasks (PENDING_APPROVAL) grouped by project
+ * @param {string} userId
+ * @param {Role} userRole
+ */
+export const getClaimedTasksGroupedByProject = async (
+  userId: string,
+  userRole: Role,
+) => {
+  const projects = await prisma.project.findMany({
+    where: {
+      // If PM, only show projects they manage. If SuperAdmin, show all.
+      ...(userRole === Role.PM ? { pmId: userId } : {}),
+      tasks: {
+        some: {
+          status: TaskStatus.PENDING_APPROVAL,
+        },
+      },
+    },
+    include: {
+      tasks: {
+        where: {
+          status: TaskStatus.PENDING_APPROVAL,
+        },
+        include: {
+          assignee: {
+            select: {
+              id: true,
+              email: true,
+              role: true,
+            },
+          },
+          creator: {
+            select: {
+              id: true,
+              email: true,
+              role: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return projects;
+};

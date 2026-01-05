@@ -21,6 +21,10 @@ router
   );
 
 router
+  .route('/claimed')
+  .get(auth(Role.SUPERADMIN, Role.PM), taskController.getClaimedTasks);
+
+router
   .route('/:taskId')
   .get(auth(), validate(taskValidation.getTask), taskController.getTask)
   .patch(

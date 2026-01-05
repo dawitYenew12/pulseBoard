@@ -63,7 +63,7 @@
         name: status
         schema:
           type: string
-          enum: [TODO, IN_PROGRESS, DONE]
+          enum: [TODO, PENDING_APPROVAL, IN_PROGRESS, DONE]
       - in: query
         name: priority
         schema:
@@ -109,6 +109,37 @@
                   example: 1
       "401":
         $ref: '#/components/responses/Unauthorized'
+
+/tasks/claimed:
+  get:
+    summary: Get claimed tasks (pending approval) grouped by project
+    description: Only SUPERADMIN or PM can see pending tasks. PMs only see their projects.
+    tags: [Tasks]
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  tasks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+      "403":
+        $ref: '#/components/responses/Forbidden'
 
 /tasks/{taskId}:
   get:
@@ -159,7 +190,7 @@
                 type: string
               status:
                 type: string
-                enum: [TODO, IN_PROGRESS, DONE]
+                enum: [TODO, PENDING_APPROVAL, IN_PROGRESS, DONE]
               priority:
                 type: string
                 enum: [LOW, MEDIUM, HIGH]

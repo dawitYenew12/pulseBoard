@@ -133,3 +133,14 @@ export const getProjectTasks = catchAsync(
     res.send(result);
   },
 );
+
+export const getClaimedTasks = catchAsync(
+  async (req: Request, res: Response) => {
+    const user = req.user as any;
+    const result = await taskService.getClaimedTasksGroupedByProject(
+      user.id,
+      user.role,
+    );
+    res.send(result);
+  },
+);

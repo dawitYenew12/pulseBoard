@@ -78,7 +78,7 @@ components:
           type: string
         status:
           type: string
-          enum: [TODO, IN_PROGRESS, DONE]
+          enum: [TODO, PENDING_APPROVAL, IN_PROGRESS, DONE]
         priority:
           type: string
           enum: [LOW, MEDIUM, HIGH]
