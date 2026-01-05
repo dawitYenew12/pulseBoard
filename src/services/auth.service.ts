@@ -20,6 +20,12 @@ export const loginUserWithEmailAndPassword = async (
   password: string,
 ): Promise<UserResponse> => {
   const user = await userService.getUserByEmail(email);
+  if (user?.isVerified === false) {
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      'User is not verified, please verify your email',
+    );
+  }
   if (!user || !(await bcrypt.compare(password, user.password))) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');
   }

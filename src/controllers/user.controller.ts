@@ -29,3 +29,12 @@ export const updateUserRole = catchAsync(
     res.send(user);
   },
 );
+
+export const getProjectMembers = catchAsync(
+  async (req: Request, res: Response) => {
+    const projectMembers = await userService.getProjectMembers(
+      req.params.projectId,
+    );
+    res.send(projectMembers);
+  },
+);

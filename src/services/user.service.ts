@@ -2,7 +2,7 @@ import { User } from '@prisma/client';
 import { prisma } from '../config/prisma';
 import ApiError from '../utils/ApiError';
 import httpStatus from 'http-status';
-import { UserBody } from '../types/user.types';
+import { UserBody, UserResponse } from '../types/user.types';
 import bcrypt from 'bcryptjs';
 import tokenService from './token.service';
 import { sendVerificationEmail } from './email.service';
@@ -13,8 +13,6 @@ export const isEmailTaken = async (email: string): Promise<boolean> => {
   });
   return !!user;
 };
-
-import { UserResponse } from '../types/user.types';
 
 export const formatUser = (user: User): UserResponse => {
   return {
@@ -137,4 +135,19 @@ export const updateUserRole = async (
   });
 
   return formatUser(updatedUser);
+};
+
+export const getProjectMembers = async (
+  projectId: string,
+): Promise<UserResponse[]> => {
+  const projectMembers = await prisma.user.findMany({
+    where: {
+      projectMemberships: {
+        some: {
+          projectId,
+        },
+      },
+    },
+  });
+  return projectMembers.map(formatUser);
 };
