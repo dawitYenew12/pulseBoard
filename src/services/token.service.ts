@@ -45,7 +45,7 @@ export const verifyToken = async (
   const tokenDoc = await prisma.token.findFirst({
     where: {
       token,
-      userId: payload.subject,
+      userId: payload.sub,
       type,
       revoked: false,
     },
@@ -68,10 +68,10 @@ export const generateToken = ({
   secret = config.jwt.secretKey,
 }: GenerateTokenInput): string => {
   const payload = {
-    subject: userId,
+    sub: userId,
     role,
-    issueDate: dayjs().unix(),
-    expTime: expires.unix(),
+    iat: dayjs().unix(),
+    exp: expires.unix(),
     type,
   };
 

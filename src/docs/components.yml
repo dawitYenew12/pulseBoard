@@ -120,6 +120,14 @@ components:
           type: integer
           description: Duration in minutes
 
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+
   responses:
     Unauthorized:
       description: Unauthorized
@@ -139,11 +147,19 @@ components:
           example:
             code: 403
             message: Forbidden
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: 404
+            message: Not Found
 
-    Error:
-      type: object
-      properties:
-        code:
-          type: integer
-        message:
-          type: string
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+

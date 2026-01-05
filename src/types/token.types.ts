@@ -3,9 +3,9 @@ import { JwtPayload as BaseJwtPayload } from 'jsonwebtoken';
 import dayjs from 'dayjs';
 
 export interface TokenPayload extends BaseJwtPayload {
-  subject: string;
-  issueDate: number;
-  expTime: number;
+  sub: string;
+  iat: number;
+  exp: number;
   type: TokenType;
   role: Role;
 }

@@ -26,7 +26,7 @@ export const auth =
         throw new Error('Invalid access token');
       }
 
-      const user = await getUserById(decoded.subject);
+      const user = await getUserById(decoded.sub);
       if (!user) {
         throw new ApiError(httpStatus.UNAUTHORIZED, 'User not found');
       }
