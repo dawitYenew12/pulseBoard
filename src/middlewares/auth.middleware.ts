@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import httpStatus from 'http-status';
 import { Role, TokenType } from '@prisma/client';
 import config from '../config/config';
+import { prisma } from '../config/prisma';
 import ApiError from '../utils/ApiError';
 import { getUserById, formatUser } from '../services/user.service';
 import { TokenPayload } from '../types/token.types';
@@ -29,6 +30,21 @@ export const auth =
       const user = await getUserById(decoded.sub);
       if (!user) {
         throw new ApiError(httpStatus.UNAUTHORIZED, 'User not found');
+      }
+
+      // Check if a valid refresh token exists for this user
+      const activeRefreshToken = await prisma.refreshToken.findFirst({
+        where: {
+          userId: user.id,
+          revoked: false,
+          expiresAt: {
+            gt: new Date(),
+          },
+        },
+      });
+
+      if (!activeRefreshToken) {
+        throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid access token');
       }
 
       const userRole = user.role;
