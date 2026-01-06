@@ -49,8 +49,37 @@ export const queryProjects = async (
     orderBy.createdAt = 'desc';
   }
 
+  // Create a clean filter by removing undefined/empty values
+  const queryFilter: Prisma.ProjectWhereInput = {};
+
+  if (filter.name) {
+    queryFilter.name = { contains: filter.name as string, mode: 'insensitive' };
+  }
+
+  if (filter.pmId) {
+    queryFilter.pmId = filter.pmId;
+  }
+
+  if ((filter as any).memberId) {
+    const memberId = (filter as any).memberId;
+    // When filtering by memberId, we want projects where they are PM OR Member.
+    // We should clear pmId from top level if it was set to avoid conflicting filters.
+    delete (queryFilter as any).pmId;
+
+    queryFilter.OR = [
+      { pmId: memberId },
+      {
+        projectMembers: {
+          some: {
+            userId: memberId,
+          },
+        },
+      },
+    ];
+  }
+
   const projects = await prisma.project.findMany({
-    where: filter,
+    where: queryFilter,
     skip,
     take: limit,
     orderBy,

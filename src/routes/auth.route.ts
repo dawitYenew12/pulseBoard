@@ -12,6 +12,9 @@ import {
   verifyEmail,
   forgotPassword,
   resetPassword,
+  refreshAuthTokens,
+  resendVerificationEmail,
+  logout,
 } from '../controllers/auth.controller';
 
 import {
@@ -42,5 +45,8 @@ router.post(
   validate(resetPasswordSchema),
   resetPassword,
 );
+router.post('/refresh-tokens', refreshAuthTokens);
+router.post('/resend-verification', resendVerificationEmail);
+router.post('/logout', logout);
 
 export default router;

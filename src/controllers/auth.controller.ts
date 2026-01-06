@@ -8,8 +8,13 @@ import emailService from '../services/email.service';
 import config from '../config/config';
 
 export const signup = catchAsync(async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  const createdUser = await userService.createUser({ email, password });
+  const { email, password, firstName, lastName } = req.body;
+  const createdUser = await userService.createUser({
+    email,
+    password,
+    firstName,
+    lastName,
+  });
 
   const tokens = await tokenService.generateAuthTokens(createdUser.user);
 
@@ -42,9 +47,17 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   });
 
   res.status(httpStatus.OK).json({
+    message: 'Login successful',
     user,
     tokens,
   });
+});
+
+export const logout = catchAsync(async (req: Request, res: Response) => {
+  const { userId } = req.body;
+  await authService.logout(userId);
+  res.clearCookie('refreshToken');
+  res.status(httpStatus.OK).json({ message: 'Logged out successfully' });
 });
 
 export const refreshAuthTokens = catchAsync(
@@ -65,7 +78,10 @@ export const refreshAuthTokens = catchAsync(
       maxAge: config.jwt.refreshTokenDays * 24 * 60 * 60 * 1000,
     });
 
-    res.status(httpStatus.OK).json({ tokens });
+    res.status(httpStatus.OK).json({
+      message: 'Tokens refreshed successfully',
+      tokens,
+    });
   },
 );
 
@@ -92,3 +108,15 @@ export const resetPassword = catchAsync(async (req: Request, res: Response) => {
     .status(httpStatus.OK)
     .json({ message: 'Password reset successfully. You can now log in.' });
 });
+
+export const resendVerificationEmail = catchAsync(
+  async (req: Request, res: Response) => {
+    const { email } = req.body;
+    const user = await userService.getUserByEmail(email);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    await emailService.resendVerificationEmail(user.id);
+    res.status(httpStatus.OK).json({ message: 'Verification email resent' });
+  },
+);

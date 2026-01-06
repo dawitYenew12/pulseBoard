@@ -11,9 +11,11 @@ export const createProject = {
 export const getProjects = {
   query: z.object({
     name: z.string().optional(),
+    pmId: z.string().uuid().optional(),
+    memberId: z.string().uuid().optional(),
     sortBy: z.string().optional(),
-    limit: z.number().int().optional(),
-    page: z.number().int().optional(),
+    limit: z.coerce.number().int().optional(),
+    page: z.coerce.number().int().optional(),
   }),
 };
 

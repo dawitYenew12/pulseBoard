@@ -15,7 +15,9 @@ export const sendVerificationEmail = async (
   emailVerificationToken: string,
 ): Promise<void> => {
   try {
-    const verificationUrl = `${config.env === 'production' ? 'https://yourdomain.com' : 'http://localhost:5000'}/api/v1/auth/verify-email?token=${emailVerificationToken}`;
+    const frontendUrl =
+      process.env.VITE_FRONTEND_URL || 'http://localhost:3000';
+    const verificationUrl = `${frontendUrl}/email-verified?token=${emailVerificationToken}`;
 
     const templateName = 'email-verification';
     const context = {
@@ -135,7 +137,9 @@ export const sendPasswordResetEmail = async (
   resetToken: string,
 ): Promise<void> => {
   try {
-    const resetUrl = `${config.env === 'production' ? 'https://yourdomain.com' : 'http://localhost:5000'}/api/v1/auth/reset-password?token=${resetToken}`;
+    const frontendUrl =
+      process.env.VITE_FRONTEND_URL || 'http://localhost:3000';
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     const templateName = 'password-reset';
     const context = {

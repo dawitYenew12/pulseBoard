@@ -6,6 +6,14 @@ export const createUserSchema = {
   body: z.object({
     email: z.string().email(),
     password: password,
+    firstName: z
+      .string()
+      .min(1, 'First name is required')
+      .max(50, 'First name must be less than 50 characters'),
+    lastName: z
+      .string()
+      .min(1, 'Last name is required')
+      .max(50, 'Last name must be less than 50 characters'),
   }),
 };
 
@@ -40,8 +48,8 @@ export const getUsers = {
     email: z.string().optional(),
     role: z.nativeEnum(Role).optional(),
     sortBy: z.string().optional(),
-    limit: z.number().int().positive().optional(),
-    page: z.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().optional(),
+    page: z.coerce.number().int().positive().optional(),
   }),
 };
 

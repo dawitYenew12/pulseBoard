@@ -107,3 +107,17 @@ export const forgotPassword = async (email: string): Promise<void> => {
   const emailService = require('./email.service').default;
   await emailService.sendPasswordResetEmail(user.email, resetTokenDoc.token);
 };
+
+export const logout = async (userId: string): Promise<void> => {
+  if (!userId) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      'User ID is required for logout',
+    );
+  }
+  await prisma.refreshToken.deleteMany({
+    where: {
+      userId,
+    },
+  });
+};

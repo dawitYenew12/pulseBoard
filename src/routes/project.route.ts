@@ -15,7 +15,7 @@ const router = express.Router();
 router
   .route('/')
   .post(
-    auth(Role.SUPERADMIN),
+    auth(Role.SUPERADMIN, Role.PM),
     validate(projectValidation.createProject),
     projectController.createProject,
   )

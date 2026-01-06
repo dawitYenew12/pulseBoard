@@ -7,14 +7,20 @@ import { Request, Response } from 'express';
 
 export const createProject = catchAsync(async (req: Request, res: Response) => {
   const project = await projectService.createProject(req.body);
-  res.status(httpStatus.CREATED).send(project);
+  res.status(httpStatus.CREATED).json({
+    message: 'Project created successfully',
+    project,
+  });
 });
 
 export const getProjects = catchAsync(async (req: Request, res: Response) => {
-  const filter = pick(req.query, ['name']);
+  const filter = pick(req.query, ['name', 'pmId', 'memberId']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
   const result = await projectService.queryProjects(filter, options);
-  res.send(result);
+  res.status(httpStatus.OK).json({
+    message: 'Projects retrieved successfully',
+    result,
+  });
 });
 
 export const getProject = catchAsync(async (req: Request, res: Response) => {
@@ -24,7 +30,10 @@ export const getProject = catchAsync(async (req: Request, res: Response) => {
   if (!project) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Project not found');
   }
-  res.send(project);
+  res.status(httpStatus.OK).json({
+    message: 'Project retrieved successfully',
+    project,
+  });
 });
 
 export const updateProject = catchAsync(async (req: Request, res: Response) => {
@@ -33,7 +42,10 @@ export const updateProject = catchAsync(async (req: Request, res: Response) => {
     req.params.projectId,
     req.body,
   );
-  res.send(project);
+  res.status(httpStatus.OK).json({
+    message: 'Project updated successfully',
+    project,
+  });
 });
 
 export const deleteProject = catchAsync(async (req: Request, res: Response) => {
@@ -48,7 +60,10 @@ export const assignPm = catchAsync(async (req: Request, res: Response) => {
     req.params.projectId,
     req.body.pmId,
   );
-  res.send(project);
+  res.status(httpStatus.OK).json({
+    message: 'Project manager assigned successfully',
+    project,
+  });
 });
 
 export const addMember = catchAsync(async (req: Request, res: Response) => {
@@ -57,7 +72,7 @@ export const addMember = catchAsync(async (req: Request, res: Response) => {
     req.params.projectId,
     req.body.userId,
   );
-  res.status(httpStatus.CREATED).send({ message: 'Member added successfully' });
+  res.status(httpStatus.CREATED).json({ message: 'Member added successfully' });
 });
 
 export const removeMember = catchAsync(async (req: Request, res: Response) => {

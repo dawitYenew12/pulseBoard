@@ -10,7 +10,10 @@ import { Role } from '@prisma/client';
 export const createTask = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as any;
   const task = await taskService.createTask(req.body, user.id);
-  res.status(httpStatus.CREATED).send(task);
+  res.status(httpStatus.CREATED).json({
+    message: 'Task created successfully',
+    task,
+  });
 });
 
 export const getTasks = catchAsync(async (req: Request, res: Response) => {
@@ -37,7 +40,10 @@ export const getTasks = catchAsync(async (req: Request, res: Response) => {
   }
 
   const result = await taskService.queryTasks(filter, options);
-  res.send(result);
+  res.status(httpStatus.OK).json({
+    message: 'Tasks retrieved successfully',
+    result,
+  });
 });
 
 export const getTask = catchAsync(async (req: Request, res: Response) => {
@@ -55,7 +61,10 @@ export const getTask = catchAsync(async (req: Request, res: Response) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'Cannot access this task');
   }
 
-  res.send(task);
+  res.status(httpStatus.OK).json({
+    message: 'Task retrieved successfully',
+    task,
+  });
 });
 
 export const updateTask = catchAsync(async (req: Request, res: Response) => {
@@ -66,13 +75,16 @@ export const updateTask = catchAsync(async (req: Request, res: Response) => {
     user.id,
     user.role as Role,
   );
-  res.send(task);
+  res.status(httpStatus.OK).json({
+    message: 'Task updated successfully',
+    task,
+  });
 });
 
 export const claimTask = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as any;
   await taskService.claimTask(req.params.taskId, user.id);
-  res.status(httpStatus.OK).send({
+  res.status(httpStatus.OK).json({
     message: 'You have claimed the task. Wait until confirmation.',
     status: 'PENDING_APPROVAL',
   });
@@ -85,7 +97,10 @@ export const approveClaim = catchAsync(async (req: Request, res: Response) => {
     user.id,
     user.role,
   );
-  res.send(task);
+  res.status(httpStatus.OK).json({
+    message: 'Task claim approved successfully',
+    task,
+  });
 });
 
 export const rejectClaim = catchAsync(async (req: Request, res: Response) => {
@@ -95,7 +110,10 @@ export const rejectClaim = catchAsync(async (req: Request, res: Response) => {
     user.id,
     user.role,
   );
-  res.send(task);
+  res.status(httpStatus.OK).json({
+    message: 'Task claim rejected successfully',
+    task,
+  });
 });
 
 export const deleteTask = catchAsync(async (req: Request, res: Response) => {
@@ -130,7 +148,10 @@ export const getProjectTasks = catchAsync(
       { ...filter, projectId },
       options,
     );
-    res.send(result);
+    res.status(httpStatus.OK).json({
+      message: 'Project tasks retrieved successfully',
+      result,
+    });
   },
 );
 
@@ -141,6 +162,9 @@ export const getClaimedTasks = catchAsync(
       user.id,
       user.role,
     );
-    res.send(result);
+    res.status(httpStatus.OK).json({
+      message: 'Claimed tasks retrieved successfully',
+      result,
+    });
   },
 );

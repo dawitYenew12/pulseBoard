@@ -48,7 +48,8 @@ export const auth =
       }
 
       const userRole = user.role;
-
+      console.log('user role: ', userRole);
+      console.log('required roles: ', requiredRoles);
       if (requiredRoles.length && !requiredRoles.includes(userRole)) {
         throw new ApiError(httpStatus.FORBIDDEN, 'Forbidden');
       }

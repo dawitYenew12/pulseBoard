@@ -32,7 +32,7 @@ if (config.env === 'production') {
   logger.info('Development CORS enabled');
   app.use(
     cors({
-      origin: '*',
+      origin: config.corsOrigin,
       credentials: true,
     }),
   );

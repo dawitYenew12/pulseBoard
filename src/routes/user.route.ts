@@ -11,6 +11,11 @@ const router = express.Router();
 // Get all users (paginated) - Only SUPERADMIN and PM can list all users
 router
   .route('/')
+  .post(
+    auth(Role.SUPERADMIN),
+    validate(userValidation.createUserSchema),
+    userController.createUser,
+  )
   .get(
     auth(Role.SUPERADMIN, Role.PM),
     validate(userValidation.getUsers),

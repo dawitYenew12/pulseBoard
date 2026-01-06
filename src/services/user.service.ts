@@ -18,6 +18,8 @@ export const formatUser = (user: User): UserResponse => {
   return {
     id: user.id,
     email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
     role: user.role,
     isVerified: user.isVerified,
     createdAt: user.createdAt,
@@ -34,7 +36,7 @@ export const createUser = async (
       'User with this email already exists',
     );
   }
-  const { email, password } = userBody;
+  const { email, password, firstName, lastName } = userBody;
   const result = await prisma.$transaction(async (tx) => {
     // hash password and create user
     const hashedPassword = await bcrypt.hash(password, 8);
@@ -42,6 +44,8 @@ export const createUser = async (
       data: {
         email,
         password: hashedPassword,
+        firstName,
+        lastName,
       },
     });
 
@@ -140,14 +144,27 @@ export const updateUserRole = async (
 export const getProjectMembers = async (
   projectId: string,
 ): Promise<UserResponse[]> => {
-  const projectMembers = await prisma.user.findMany({
+  // Get the project to find the PM
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { pmId: true },
+  });
+
+  const members = await prisma.user.findMany({
     where: {
-      projectMemberships: {
-        some: {
-          projectId,
+      OR: [
+        {
+          id: project?.pmId || undefined,
         },
-      },
+        {
+          projectMemberships: {
+            some: {
+              projectId,
+            },
+          },
+        },
+      ],
     },
   });
-  return projectMembers.map(formatUser);
+  return members.map(formatUser);
 };

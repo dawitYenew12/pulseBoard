@@ -37,6 +37,8 @@ async function main() {
     create: {
       email: superAdminEmail,
       password: hashedPassword,
+      firstName: 'Super',
+      lastName: 'Admin',
       role: Role.SUPERADMIN,
       isVerified: true,
     },
