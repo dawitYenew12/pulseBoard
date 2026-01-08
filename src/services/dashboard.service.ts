@@ -8,86 +8,157 @@ import { Role } from '@prisma/client';
  * @returns {Promise<Object>}
  */
 export const getDashboardStats = async (userId: string, role: string) => {
-  if (role === Role.SUPERADMIN) {
-    // SuperAdmin sees global stats
-    const [projects, tasks, users] = await Promise.all([
-      prisma.project.count(),
-      prisma.task.count(),
-      prisma.user.count(),
+  // Shared helper for task breakdown
+  const getTaskBreakdown = async (where: any) => {
+    const [statusStats, priorityStats] = await Promise.all([
+      prisma.task.groupBy({
+        by: ['status'],
+        where,
+        _count: { id: true },
+      }),
+      prisma.task.groupBy({
+        by: ['priority'],
+        where,
+        _count: { id: true },
+      }),
     ]);
+
+    return {
+      status: statusStats.map((s) => ({ label: s.status, count: s._count.id })),
+      priority: priorityStats.map((p) => ({
+        label: p.priority,
+        count: p._count.id,
+      })),
+    };
+  };
+
+  // Helper for 7-day focus trends
+  const getFocusTrends = async (where: any) => {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // Last 7 days including today
+
+    const sessions = await prisma.focusSession.findMany({
+      where: {
+        ...where,
+        startTime: { gte: sevenDaysAgo },
+      },
+      select: {
+        startTime: true,
+        durationMin: true,
+      },
+    });
+
+    const trendsMap: Record<string, number> = {};
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      trendsMap[d.toISOString().split('T')[0]] = 0;
+    }
+
+    sessions.forEach((s) => {
+      const day = s.startTime.toISOString().split('T')[0];
+      if (trendsMap[day] !== undefined) {
+        trendsMap[day] += s.durationMin || 0;
+      }
+    });
+
+    return Object.entries(trendsMap)
+      .map(([date, minutes]) => ({
+        date: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
+        minutes,
+      }))
+      .sort((a, b) => {
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        return days.indexOf(a.date) - days.indexOf(b.date);
+      });
+  };
+
+  if (role === Role.SUPERADMIN) {
+    const [projects, tasks, users, breakdowns, focusTime, focusTrends] =
+      await Promise.all([
+        prisma.project.count(),
+        prisma.task.count(),
+        prisma.user.count({
+          where: { role: { not: Role.SUPERADMIN } },
+        }),
+        getTaskBreakdown({}),
+        prisma.focusSession.aggregate({
+          _sum: { durationMin: true },
+        }),
+        getFocusTrends({}),
+      ]);
 
     return {
       projects,
       tasks,
       users,
+      statusBreakdown: breakdowns.status,
+      priorityBreakdown: breakdowns.priority,
+      totalFocusTime: focusTime._sum.durationMin || 0,
+      focusTrends,
     };
   }
 
-  // Regular users (PM, EMPLOYEE) see their own stats
-  const [projectCount, taskCount, teamMembersCount] = await Promise.all([
-    // 1. Projects the user is part of (either as PM or Member)
-    prisma.project.count({
-      where: {
-        OR: [
-          { pmId: userId },
-          {
-            projectMembers: {
-              some: {
-                userId: userId,
-              },
-            },
-          },
-        ],
-      },
-    }),
+  // Role-specific filters
+  const projectFilter =
+    role === Role.PM
+      ? { pmId: userId }
+      : { projectMembers: { some: { userId } } };
 
-    // 2. Tasks assigned to the user
-    prisma.task.count({
-      where: {
-        assignedTo: userId,
-      },
-    }),
+  const taskFilter =
+    role === Role.PM ? { project: { pmId: userId } } : { assignedTo: userId };
 
-    // 3. Team Members: Unique users in projects this user belongs to
-    // This is a bit complex, might need a raw query or 2-step process for efficiency with Prisma
-    // Step A: Get all project IDs the user is part of
+  const focusFilter =
+    role === Role.PM
+      ? { task: { project: { pmId: userId } } }
+      : { userId: userId };
+
+  const [
+    projectCount,
+    taskCount,
+    breakdowns,
+    teamMembersCount,
+    focusTime,
+    focusTrends,
+  ] = await Promise.all([
+    prisma.project.count({ where: projectFilter }),
+    prisma.task.count({ where: taskFilter }),
+    getTaskBreakdown(taskFilter),
     prisma.project
       .findMany({
-        where: {
-          OR: [{ pmId: userId }, { projectMembers: { some: { userId } } }],
-        },
-        select: {
-          id: true,
-        },
+        where: projectFilter,
+        select: { id: true },
       })
       .then(async (projects) => {
         if (projects.length === 0) return 0;
-
         const projectIds = projects.map((p) => p.id);
-
-        // Step B: Count unique users in those projects
-        // We check for users who are either PM of those projects OR members of those projects
-        const uniqueUsers = await prisma.user.count({
+        return prisma.user.count({
           where: {
             OR: [
-              // Users who are PMs of these projects
               { projectsOwned: { some: { id: { in: projectIds } } } },
-              // Users who are members of these projects
               {
                 projectMemberships: { some: { projectId: { in: projectIds } } },
               },
             ],
-            // Exclude self? Usually "Team Members" implies others, but "Total Network" implies all.
-            // Let's include self for now to match "Member count" logic usually seen.
+            role: { not: Role.SUPERADMIN },
           },
         });
-        return uniqueUsers;
       }),
+    prisma.focusSession.aggregate({
+      where: focusFilter,
+      _sum: { durationMin: true },
+    }),
+    getFocusTrends(focusFilter),
   ]);
 
   return {
     projects: projectCount,
     tasks: taskCount,
     users: teamMembersCount,
+    statusBreakdown: breakdowns.status,
+    priorityBreakdown: breakdowns.priority,
+    totalFocusTime: focusTime._sum.durationMin || 0,
+    focusTrends,
   };
 };

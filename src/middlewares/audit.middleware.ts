@@ -27,11 +27,11 @@ const SENSITIVE_FIELDS = [
 // }
 
 const ROUTE_ENTITY_MAP: Record<string, string> = {
-  '/api/projects': 'Project',
-  '/api/tasks': 'Task',
-  '/api/focus-sessions': 'FocusSession',
-  '/api/auth': 'Auth',
-  '/api/users': 'User',
+  '/api/v1/projects': 'Project',
+  '/api/v1/tasks': 'Task',
+  '/api/v1/focus-sessions': 'FocusSession',
+  '/api/v1/auth': 'Auth',
+  '/api/v1/users': 'User',
 };
 
 export const auditMiddleware = (
@@ -53,6 +53,7 @@ export const auditMiddleware = (
 
   res.on('finish', async () => {
     try {
+      if (res.locals.skipAuditLog) return; // Skip if controller handled it manually
       const user = (req as any).user;
       if (!user) return; // Only log authenticated actions
 
@@ -80,13 +81,16 @@ export const auditMiddleware = (
         req.body.title ??
         responseBody?.data?.name ??
         responseBody?.data?.title ??
+        responseBody?.task?.title ??
         responseBody?.name ??
         responseBody?.title;
 
       const entityId =
+        req.params.taskId ??
         req.params.id ??
         req.body.id ??
         responseBody?.data?.id ??
+        responseBody?.task?.id ??
         responseBody?.id;
 
       const receiver = entityName
@@ -95,7 +99,20 @@ export const auditMiddleware = (
           ? `${entity} (ID: ${entityId.slice(0, 8)})`
           : entity;
 
-      const description = `${action} performed on ${receiver.toLowerCase()}`;
+      // Provide specific descriptions for task-related actions
+      let description = `${action} performed on ${receiver.toLowerCase()}`;
+
+      // Check for specific task actions
+      if (req.originalUrl.includes('/claim')) {
+        action = 'CREATE';
+        description = `Task claimed: ${entityName || entityId?.slice(0, 8) || 'Unknown'}`;
+      } else if (req.originalUrl.includes('/approve-claim')) {
+        action = 'UPDATE';
+        description = `Task claim approved: ${entityName || entityId?.slice(0, 8) || 'Unknown'}`;
+      } else if (req.originalUrl.includes('/reject-claim')) {
+        action = 'UPDATE';
+        description = `Task claim rejected: ${entityName || entityId?.slice(0, 8) || 'Unknown'}`;
+      }
 
       await prisma.log.create({
         data: {

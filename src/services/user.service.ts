@@ -145,6 +145,70 @@ export const updateUserRole = async (
   return formatUser(updatedUser);
 };
 
+/**
+ * Update user by id
+ * @param {string} userId
+ * @param {Object} updateBody
+ * @returns {Promise<UserResponse>}
+ */
+export const updateUserById = async (
+  userId: string,
+  updateBody: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    password?: string;
+    currentPassword?: string;
+  },
+): Promise<UserResponse> => {
+  const user = await getUserById(userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  // If trying to update sensitive info (email/password) or if currentPassword is provided, verify it
+  if (updateBody.currentPassword) {
+    const isPasswordMatch = await bcrypt.compare(
+      updateBody.currentPassword,
+      user.password,
+    );
+    if (!isPasswordMatch) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect password');
+    }
+    // Remove currentPassword from update data so we don't try to save it to DB
+    delete updateBody.currentPassword;
+  } else {
+    // If we want to strictly enforce password for any update, checking if it's missing:
+    // throw new ApiError(httpStatus.BAD_REQUEST, 'Current password is required to update profile');
+    // But for now, let's assume if the frontend sends it, we verify.
+    // If the User request specifically asked "we should ask for password", we should probably enforce it.
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      'Current password is required to update profile',
+    );
+  }
+
+  if (
+    updateBody.email &&
+    (await isEmailTaken(updateBody.email)) &&
+    updateBody.email !== user.email
+  ) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+  }
+
+  // Hash new password if provided
+  if (updateBody.password) {
+    updateBody.password = await bcrypt.hash(updateBody.password, 8);
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: updateBody,
+  });
+
+  return formatUser(updatedUser);
+};
+
 export const getProjectMembers = async (
   projectId: string,
 ): Promise<UserResponse[]> => {

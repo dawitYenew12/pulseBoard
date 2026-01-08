@@ -7,11 +7,28 @@ import * as projectService from '../services/project.service';
 import { Request, Response } from 'express';
 import { Role } from '@prisma/client';
 
+import * as auditService from '../services/audit.service';
+
 export const createUser = catchAsync(async (req: Request, res: Response) => {
-  const { user } = await userService.createUser(req.body);
+  const { user: createdUser } = await userService.createUser(req.body);
+  const currentUser = req.user as any;
+
+  await auditService.createLog({
+    userId: currentUser.id,
+    userEmail: currentUser.email,
+    userName: `${currentUser.firstName} ${currentUser.lastName}`,
+    action: 'CREATE',
+    entity: 'User',
+    actionReceiver: `User: ${createdUser.email}`,
+    description: `User created by ${currentUser.firstName} ${currentUser.lastName}`,
+    ipAddress: req.ip,
+    endpoint: req.originalUrl,
+  });
+  res.locals.skipAuditLog = true;
+
   res.status(httpStatus.CREATED).json({
     message: 'User created successfully',
-    user,
+    user: createdUser,
   });
 });
 
@@ -42,12 +59,52 @@ export const getUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+export const updateUser = catchAsync(async (req: Request, res: Response) => {
+  const user = await userService.updateUserById(req.params.userId, req.body);
+  const currentUser = req.user as any;
+
+  // Determine if it's a self-update or admin update
+  const isSelf = currentUser.id === user.id;
+
+  await auditService.createLog({
+    userId: currentUser.id,
+    userEmail: currentUser.email,
+    userName: `${currentUser.firstName} ${currentUser.lastName}`,
+    action: 'UPDATE',
+    entity: 'User',
+    actionReceiver: `User: ${user.email}`,
+    description: isSelf
+      ? `Profile updated by user`
+      : `User profile updated by ${currentUser.firstName} ${currentUser.lastName}`,
+    ipAddress: req.ip,
+    endpoint: req.originalUrl,
+  });
+  res.locals.skipAuditLog = true;
+
+  res.send(user);
+});
+
 export const updateUserRole = catchAsync(
   async (req: Request, res: Response) => {
     const user = await userService.updateUserRole(
       req.params.userId,
       req.body.role,
     );
+    const currentUser = req.user as any;
+
+    await auditService.createLog({
+      userId: currentUser.id,
+      userEmail: currentUser.email,
+      userName: `${currentUser.firstName} ${currentUser.lastName}`,
+      action: 'UPDATE',
+      entity: 'User',
+      actionReceiver: `User: ${user.email}`,
+      description: `User role updated to ${req.body.role} by ${currentUser.firstName} ${currentUser.lastName}`,
+      ipAddress: req.ip,
+      endpoint: req.originalUrl,
+    });
+    res.locals.skipAuditLog = true;
+
     res.status(httpStatus.OK).json({
       message: 'User role updated successfully',
       user,

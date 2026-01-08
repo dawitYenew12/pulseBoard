@@ -6,10 +6,24 @@ import * as taskService from '../services/task.service';
 import * as projectService from '../services/project.service';
 import { Request, Response } from 'express';
 import { Role } from '@prisma/client';
+import * as auditService from '../services/audit.service';
 
 export const createTask = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as any;
   const task = await taskService.createTask(req.body, user.id);
+
+  await auditService.createLog({
+    userId: user.id,
+    userEmail: user.email,
+    userName: `${user.firstName} ${user.lastName}`,
+    action: 'CREATE',
+    entity: 'Task',
+    actionReceiver: `Task: ${task.title}`,
+    description: `Task created by ${user.firstName} ${user.lastName}`,
+    ipAddress: req.ip,
+    endpoint: req.originalUrl,
+  });
+
   res.status(httpStatus.CREATED).json({
     message: 'Task created successfully',
     task,
@@ -100,6 +114,21 @@ export const updateTask = catchAsync(async (req: Request, res: Response) => {
     user.id,
     user.role as Role,
   );
+
+  // Manual Audit Log for precise details (e.g. what changed could be added here in future)
+  await auditService.createLog({
+    userId: user.id,
+    userEmail: user.email,
+    userName: `${user.firstName} ${user.lastName}`,
+    action: 'UPDATE',
+    entity: 'Task',
+    actionReceiver: `Task: ${task.title}`,
+    description: `Task updated by ${user.firstName} ${user.lastName}`,
+    ipAddress: req.ip,
+    endpoint: req.originalUrl,
+  });
+  res.locals.skipAuditLog = true;
+
   res.status(httpStatus.OK).json({
     message: 'Task updated successfully',
     task,
@@ -108,10 +137,25 @@ export const updateTask = catchAsync(async (req: Request, res: Response) => {
 
 export const claimTask = catchAsync(async (req: Request, res: Response) => {
   const user = req.user as any;
-  await taskService.claimTask(req.params.taskId, user.id);
+  const task = await taskService.claimTask(req.params.taskId, user.id);
+
+  await auditService.createLog({
+    userId: user.id,
+    userEmail: user.email,
+    userName: `${user.firstName} ${user.lastName}`,
+    action: 'CREATE',
+    entity: 'Task',
+    actionReceiver: `Task: ${task.title}`,
+    description: `Task claimed by ${user.firstName} ${user.lastName}`,
+    ipAddress: req.ip,
+    endpoint: req.originalUrl,
+  });
+  res.locals.skipAuditLog = true;
+
   res.status(httpStatus.OK).json({
     message: 'You have claimed the task. Wait until confirmation.',
     status: 'PENDING_APPROVAL',
+    task,
   });
 });
 
@@ -122,6 +166,20 @@ export const approveClaim = catchAsync(async (req: Request, res: Response) => {
     user.id,
     user.role,
   );
+
+  await auditService.createLog({
+    userId: user.id,
+    userEmail: user.email,
+    userName: `${user.firstName} ${user.lastName}`,
+    action: 'UPDATE',
+    entity: 'Task',
+    actionReceiver: `Task: ${task.title}`,
+    description: `Task claim APPROVED by ${user.firstName} ${user.lastName}`,
+    ipAddress: req.ip,
+    endpoint: req.originalUrl,
+  });
+  res.locals.skipAuditLog = true;
+
   res.status(httpStatus.OK).json({
     message: 'Task claim approved successfully',
     task,
@@ -135,6 +193,20 @@ export const rejectClaim = catchAsync(async (req: Request, res: Response) => {
     user.id,
     user.role,
   );
+
+  await auditService.createLog({
+    userId: user.id,
+    userEmail: user.email,
+    userName: `${user.firstName} ${user.lastName}`,
+    action: 'UPDATE',
+    entity: 'Task',
+    actionReceiver: `Task: ${task.title}`,
+    description: `Task claim REJECTED by ${user.firstName} ${user.lastName}`,
+    ipAddress: req.ip,
+    endpoint: req.originalUrl,
+  });
+  res.locals.skipAuditLog = true;
+
   res.status(httpStatus.OK).json({
     message: 'Task claim rejected successfully',
     task,
@@ -160,6 +232,20 @@ export const deleteTask = catchAsync(async (req: Request, res: Response) => {
   }
 
   await taskService.deleteTaskById(req.params.taskId);
+
+  // Manual Audit Log
+  await auditService.createLog({
+    userId: user.id,
+    userEmail: user.email,
+    userName: `${user.firstName} ${user.lastName}`,
+    action: 'DELETE',
+    entity: 'Task',
+    actionReceiver: `Task: ${task.title}`,
+    description: `Task deleted by ${user.firstName} ${user.lastName}`,
+    ipAddress: req.ip,
+    endpoint: req.originalUrl,
+  });
+
   res.status(httpStatus.NO_CONTENT).send();
 });
 

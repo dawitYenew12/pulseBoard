@@ -24,6 +24,8 @@ router.get(
   focusController.getAnalytics,
 );
 
+router.get('/history/:taskId', focusController.getTaskSessions);
+
 router.post(
   '/:sessionId/stop',
   validate(focusValidation.stopSession),

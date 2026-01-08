@@ -59,3 +59,23 @@ export const queryLogs = async (
 
   return { logs, total };
 };
+
+export const createLog = async (data: {
+  userId: string;
+  userEmail: string;
+  userName: string;
+  action: string;
+  entity: string;
+  actionReceiver: string;
+  description: string;
+  ipAddress?: string;
+  endpoint?: string;
+}) => {
+  const { userId, ...rest } = data;
+  return prisma.log.create({
+    data: {
+      ...rest,
+      user: userId ? { connect: { id: userId } } : undefined,
+    },
+  });
+};

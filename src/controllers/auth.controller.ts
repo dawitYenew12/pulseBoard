@@ -7,6 +7,8 @@ import tokenService from '../services/token.service';
 import emailService from '../services/email.service';
 import config from '../config/config';
 
+import * as auditService from '../services/audit.service';
+
 export const signup = catchAsync(async (req: Request, res: Response) => {
   const { email, password, firstName, lastName } = req.body;
   const createdUser = await userService.createUser({
@@ -24,6 +26,19 @@ export const signup = catchAsync(async (req: Request, res: Response) => {
     sameSite: 'strict',
     maxAge: config.jwt.refreshTokenDays * 24 * 60 * 60 * 1000,
   });
+
+  await auditService.createLog({
+    userId: createdUser.user.id,
+    userEmail: createdUser.user.email,
+    userName: `${createdUser.user.firstName} ${createdUser.user.lastName}`,
+    action: 'CREATE',
+    entity: 'Auth',
+    actionReceiver: `User: ${createdUser.user.email}`,
+    description: `User signed up`,
+    ipAddress: req.ip,
+    endpoint: req.originalUrl,
+  });
+  res.locals.skipAuditLog = true;
 
   res.status(httpStatus.CREATED).json({
     message: `Sent a verification email to ${createdUser.user.email}`,
@@ -46,6 +61,19 @@ export const login = catchAsync(async (req: Request, res: Response) => {
     maxAge: config.jwt.refreshTokenDays * 24 * 60 * 60 * 1000,
   });
 
+  await auditService.createLog({
+    userId: user.id,
+    userEmail: user.email,
+    userName: `${user.firstName} ${user.lastName}`,
+    action: 'LOGIN',
+    entity: 'Auth',
+    actionReceiver: `User: ${user.email}`,
+    description: `User logged in`,
+    ipAddress: req.ip,
+    endpoint: req.originalUrl,
+  });
+  res.locals.skipAuditLog = true;
+
   res.status(httpStatus.OK).json({
     message: 'Login successful',
     user,
@@ -54,10 +82,34 @@ export const login = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const logout = catchAsync(async (req: Request, res: Response) => {
-  const { userId } = req.body;
-  await authService.logout(userId);
-  res.clearCookie('refreshToken');
-  res.status(httpStatus.OK).json({ message: 'Logged out successfully' });
+  const user = req.user as any;
+  const userId = user?.id || req.body?.userId;
+
+  if (userId) {
+    await authService.logout(userId);
+
+    try {
+      // Need user details for log. If req.user exists, use it.
+      // If only userId from body, we might not have details unless we fetch or skip detailed fields.
+      // Assuming protected route, user is available.
+      if (user) {
+        await auditService.createLog({
+          userId: user.id,
+          userEmail: user.email,
+          userName: `${user.firstName} ${user.lastName}`,
+          action: 'LOGOUT',
+          entity: 'Auth',
+          actionReceiver: `User: ${user.email}`,
+          description: `User logged out`,
+          ipAddress: req.ip,
+          endpoint: req.originalUrl,
+        });
+      }
+    } catch (e) {
+      // ignore audit error
+    }
+  }
+  res.status(httpStatus.NO_CONTENT).send();
 });
 
 export const refreshAuthTokens = catchAsync(

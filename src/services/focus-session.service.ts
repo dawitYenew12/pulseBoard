@@ -165,3 +165,23 @@ export const getAnalytics = async (
     totalDurationMin: aggregate._sum.durationMin || 0,
   };
 };
+
+/**
+ * Get all sessions for a specific task
+ * @param {string} taskId
+ */
+export const getSessionsByTaskId = async (taskId: string) => {
+  return prisma.focusSession.findMany({
+    where: { taskId },
+    orderBy: { startTime: 'desc' },
+    include: {
+      user: {
+        select: {
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+    },
+  });
+};

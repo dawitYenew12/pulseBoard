@@ -23,13 +23,21 @@ router
   );
 
 // Get specific user - Users can only see their own details unless they're SUPERADMIN/PM
-router.route('/:userId').get(
-  auth(), // Must be authenticated
-  // Check if user ID in params matches current user, or if user is Admin/PM
-  checkResourceOwnership('userId', [Role.SUPERADMIN, Role.PM]),
-  validate(userValidation.getUser),
-  userController.getUser,
-);
+router
+  .route('/:userId')
+  .get(
+    auth(), // Must be authenticated
+    // Check if user ID in params matches current user, or if user is Admin/PM
+    checkResourceOwnership('userId', [Role.SUPERADMIN, Role.PM]),
+    validate(userValidation.getUser),
+    userController.getUser,
+  )
+  .patch(
+    auth(),
+    checkResourceOwnership('userId', [Role.SUPERADMIN]), // Users can update themselves (default), SUPERADMIN can update anyone
+    validate(userValidation.updateUser),
+    userController.updateUser,
+  );
 
 // Get projects for a specific user
 router

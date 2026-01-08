@@ -53,7 +53,7 @@ import { apiLimiter } from './middlewares/api.limiter';
 
 // app.use(authMiddleware);
 app.use(apiLimiter);
-app.use(auditMiddleware);
+// app.use(auditMiddleware); // Disabled in favor of manual logging via auditService.createLog
 
 // API Routes (versioned)
 app.use('/api/v1/docs', docsRoutes);

@@ -63,6 +63,23 @@ export const getUser = {
   }),
 };
 
+export const updateUser = {
+  params: z.object({
+    userId: z.string().uuid(),
+  }),
+  body: z
+    .object({
+      email: z.string().email().optional(),
+      firstName: z.string().min(1).max(50).optional(),
+      lastName: z.string().min(1).max(50).optional(),
+      password: password.optional(), // New password if changing it
+      currentPassword: z.string().optional(), // For verification
+    })
+    .refine((data) => Object.keys(data).length > 0, {
+      message: 'At least one field must be provided for update',
+    }),
+};
+
 export const updateUserRole = {
   params: z.object({
     userId: z.string().uuid(),

@@ -140,6 +140,7 @@ model Log {
   id             Int      @id @default(autoincrement())
   userId         String?  @map("user_id")
   action         String   @default("other")
+  entity         String?  @map("entity")
   description    String?
   userEmail      String   @map("user_email")
   userName       String   @map("user_name")

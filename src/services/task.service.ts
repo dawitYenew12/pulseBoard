@@ -104,6 +104,7 @@ export const queryTasks = async (
         select: {
           id: true,
           name: true,
+          pmId: true,
         },
       },
     },
