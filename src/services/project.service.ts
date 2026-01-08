@@ -89,11 +89,42 @@ export const queryProjects = async (
           id: true,
           email: true,
           role: true,
+          firstName: true,
+          lastName: true,
+        },
+      },
+      tasks: {
+        select: {
+          status: true,
         },
       },
     },
   });
-  return projects;
+
+  return projects.map((project: any) => {
+    const totalTasks = project.tasks.length;
+    const completedTasks = project.tasks.filter(
+      (t: any) => t.status === 'DONE',
+    ).length;
+    const inProgressTasks = project.tasks.filter(
+      (t: any) => t.status === 'IN_PROGRESS',
+    ).length;
+    const todoTasks = project.tasks.filter(
+      (t: any) => t.status === 'TODO' || t.status === 'PENDING_APPROVAL',
+    ).length;
+    const progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+
+    // Remove raw tasks array to keep response clean if not needed
+    const { tasks, ...projectData } = project;
+    return {
+      ...projectData,
+      totalTasks,
+      completedTasks,
+      inProgressTasks,
+      todoTasks,
+      progress: Math.round(progress),
+    };
+  }) as any;
 };
 
 /**
@@ -110,6 +141,8 @@ export const getProjectById = async (id: string): Promise<Project | null> => {
           id: true,
           email: true,
           role: true,
+          firstName: true,
+          lastName: true,
         },
       },
       members: {
@@ -117,6 +150,8 @@ export const getProjectById = async (id: string): Promise<Project | null> => {
           id: true,
           email: true,
           role: true,
+          firstName: true,
+          lastName: true,
         },
       },
     },
@@ -231,6 +266,10 @@ export const assignPmToProject = async (
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
 
+  if (!pm.isVerified) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User account is not verified');
+  }
+
   if (pm.role !== Role.PM && pm.role !== Role.SUPERADMIN) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -267,6 +306,10 @@ export const addMemberToProject = async (
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
 
+  if (!user.isVerified) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User account is not verified');
+  }
+
   // Check if already a member
   const existingMember = await prisma.projectMember.findFirst({
     where: {
@@ -280,6 +323,13 @@ export const addMemberToProject = async (
       httpStatus.BAD_REQUEST,
       'User is already a member of this project',
     );
+  }
+
+  if (user.role === Role.PM && !project.pmId) {
+    await prisma.project.update({
+      where: { id: projectId },
+      data: { pmId: userId },
+    });
   }
 
   await prisma.projectMember.create({

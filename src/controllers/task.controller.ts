@@ -16,6 +16,8 @@ export const createTask = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+import { prisma } from '../config/prisma';
+
 export const getTasks = catchAsync(async (req: Request, res: Response) => {
   const filter = pick(req.query, [
     'projectId',
@@ -24,12 +26,13 @@ export const getTasks = catchAsync(async (req: Request, res: Response) => {
     'priority',
   ]);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
+  const user = req.user as any;
 
   if (req.query.projectId) {
     const canAccess = await projectService.canUserAccessProject(
       req.query.projectId as string,
-      (req.user as any).id,
-      (req.user as any).role,
+      user.id,
+      user.role,
     );
     if (!canAccess) {
       throw new ApiError(
@@ -37,12 +40,34 @@ export const getTasks = catchAsync(async (req: Request, res: Response) => {
         'Cannot access tasks for this project',
       );
     }
+  } else if (user.role !== Role.SUPERADMIN) {
+    // If no specific project requested, and not SUPERADMIN, return tasks from ALL projects user is part of
+    const userProjects = await prisma.project.findMany({
+      where: {
+        OR: [
+          { pmId: user.id },
+          { projectMembers: { some: { userId: user.id } } },
+        ],
+      },
+      select: { id: true },
+    });
+
+    const projectIds = userProjects.map((p) => p.id);
+
+    // Add to filter
+    (filter as any).projectId = { in: projectIds };
   }
 
-  const result = await taskService.queryTasks(filter, options);
+  const { result, total, page, limit } = await taskService.queryTasks(
+    filter,
+    options,
+  );
   res.status(httpStatus.OK).json({
     message: 'Tasks retrieved successfully',
     result,
+    total,
+    page,
+    limit,
   });
 });
 
@@ -144,13 +169,16 @@ export const getProjectTasks = catchAsync(
     const options = pick(req.query, ['sortBy', 'limit', 'page']);
     const { projectId } = req.params;
 
-    const result = await taskService.queryTasks(
+    const { result, total, page, limit } = await taskService.queryTasks(
       { ...filter, projectId },
       options,
     );
     res.status(httpStatus.OK).json({
       message: 'Project tasks retrieved successfully',
       result,
+      total,
+      page,
+      limit,
     });
   },
 );

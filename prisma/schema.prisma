@@ -135,23 +135,25 @@ model FocusSession {
 ///  * =========================
 ///  * LOGS (Audit / Activity Log)
 ///  * =========================
+///  *
 model Log {
-  id        String   @id @default(uuid())
-  userId    String?
-  message   String
-  createdAt DateTime @default(now())
-  entity    String
-  entityId  String?
-  ip        String?
-  userAgent String?
-  action    String
-  user      User?    @relation(fields: [userId], references: [id])
+  id             Int      @id @default(autoincrement())
+  userId         String?  @map("user_id")
+  action         String   @default("other")
+  description    String?
+  userEmail      String   @map("user_email")
+  userName       String   @map("user_name")
+  actionReceiver String?  @map("action_receiver")
+  ipAddress      String?  @map("ip_address")
+  createdAt      DateTime @default(now()) @map("created_at")
+  endpoint       String?  @map("endpoint")
+  user           User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
-  @@index([entity])
   @@index([action])
   @@index([createdAt(sort: Desc)])
-  @@index([entity, entityId])
+  @@index([userEmail])
+  @@map("logs")
 }
 
 enum Role {

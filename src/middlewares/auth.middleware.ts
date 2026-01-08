@@ -32,6 +32,13 @@ export const auth =
         throw new ApiError(httpStatus.UNAUTHORIZED, 'User not found');
       }
 
+      if (!user.isVerified) {
+        throw new ApiError(
+          httpStatus.FORBIDDEN,
+          'Account not verified. Please verify your email to perform actions.',
+        );
+      }
+
       // Check if a valid refresh token exists for this user
       const activeRefreshToken = await prisma.refreshToken.findFirst({
         where: {

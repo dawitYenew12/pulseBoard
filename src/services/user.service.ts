@@ -133,6 +133,10 @@ export const updateUserRole = async (
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
 
+  if (!user.isVerified) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'User account is not verified');
+  }
+
   const updatedUser = await prisma.user.update({
     where: { id: userId },
     data: { role },

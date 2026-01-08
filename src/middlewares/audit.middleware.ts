@@ -53,55 +53,63 @@ export const auditMiddleware = (
 
   res.on('finish', async () => {
     try {
-      const userId = (req as any).user?.id ?? null;
+      const user = (req as any).user;
+      if (!user) return; // Only log authenticated actions
 
-      // Detect entity from route
+      const userId = user.id;
+      const userEmail = user.email;
+      const userName = `${user.firstName} ${user.lastName}`;
+
+      // Simplify action: just CREATE, UPDATE, DELETE, or OTHER
+      let action = 'OTHER';
+      if (req.method === 'POST') action = 'CREATE';
+      else if (['PUT', 'PATCH'].includes(req.method)) action = 'UPDATE';
+      else if (req.method === 'DELETE') action = 'DELETE';
+
+      // Extract entity and name for receiver
       let entity = 'System';
-      let entityId: string | undefined = undefined;
-
       for (const [prefix, ent] of Object.entries(ROUTE_ENTITY_MAP)) {
         if (req.originalUrl.startsWith(prefix)) {
           entity = ent;
-          entityId =
-            req.params.id ??
-            req.body.id ??
-            responseBody?.data?.id ??
-            responseBody?.id;
           break;
         }
       }
 
-      // Derive action
-      const methodAction =
-        {
-          POST: 'CREATE',
-          PUT: 'UPDATE',
-          PATCH: 'UPDATE',
-          DELETE: 'DELETE',
-        }[req.method] || req.method;
+      const entityName =
+        req.body.name ??
+        req.body.title ??
+        responseBody?.data?.name ??
+        responseBody?.data?.title ??
+        responseBody?.name ??
+        responseBody?.title;
 
-      const action = `${entity.toUpperCase()}_${methodAction}`;
+      const entityId =
+        req.params.id ??
+        req.body.id ??
+        responseBody?.data?.id ??
+        responseBody?.id;
 
-      const verb =
-        methodAction === 'CREATE'
-          ? 'Created'
-          : methodAction === 'UPDATE'
-            ? 'Updated'
-            : methodAction === 'DELETE'
-              ? 'Deleted'
-              : methodAction;
+      const receiver = entityName
+        ? `${entity}: ${entityName}`
+        : entityId
+          ? `${entity} (ID: ${entityId.slice(0, 8)})`
+          : entity;
 
-      const message = `${verb} ${entity.toLowerCase()}${entityId ? ` (${entityId.slice(0, 8)}...)` : ''}`;
+      const description = `${action} performed on ${receiver.toLowerCase()}`;
 
       await prisma.log.create({
         data: {
           userId,
           action,
-          entity,
-          entityId,
-          message,
-          ip: (req.ip || req.socket.remoteAddress)?.replace('::ffff:', ''),
-          userAgent: req.get('User-Agent'),
+          description,
+          userEmail,
+          userName,
+          actionReceiver: receiver,
+          endpoint: req.originalUrl,
+          ipAddress: (req.ip || req.socket.remoteAddress)?.replace(
+            '::ffff:',
+            '',
+          ),
         },
       });
     } catch (error) {

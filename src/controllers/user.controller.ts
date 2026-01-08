@@ -3,7 +3,9 @@ import pick from '../utils/pick';
 import ApiError from '../utils/ApiError';
 import { catchAsync } from '../utils/CatchAsync';
 import * as userService from '../services/user.service';
+import * as projectService from '../services/project.service';
 import { Request, Response } from 'express';
+import { Role } from '@prisma/client';
 
 export const createUser = catchAsync(async (req: Request, res: Response) => {
   const { user } = await userService.createUser(req.body);
@@ -14,8 +16,14 @@ export const createUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const getUsers = catchAsync(async (req: Request, res: Response) => {
-  const filter = pick(req.query, ['email', 'role']);
+  const filter = pick(req.query, ['email', 'role', 'isVerified']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+  // RBAC filtering: PM can see all users except SUPERADMIN
+  if (req.user?.role === Role.PM) {
+    filter.role = { not: Role.SUPERADMIN };
+  }
+
   const result = await userService.queryUsers(filter, options);
   res.status(httpStatus.OK).json({
     message: 'Users retrieved successfully',
@@ -55,6 +63,18 @@ export const getProjectMembers = catchAsync(
     res.status(httpStatus.OK).json({
       message: 'Project members retrieved successfully',
       projectMembers,
+    });
+  },
+);
+
+export const getUserProjects = catchAsync(
+  async (req: Request, res: Response) => {
+    const filter = { memberId: req.params.userId } as any;
+    const options = pick(req.query, ['sortBy', 'limit', 'page']);
+    const result = await projectService.queryProjects(filter, options);
+    res.status(httpStatus.OK).json({
+      message: 'User projects retrieved successfully',
+      result,
     });
   },
 );

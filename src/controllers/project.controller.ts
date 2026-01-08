@@ -5,6 +5,8 @@ import { catchAsync } from '../utils/CatchAsync';
 import * as projectService from '../services/project.service';
 import { Request, Response } from 'express';
 
+import { Role } from '@prisma/client';
+
 export const createProject = catchAsync(async (req: Request, res: Response) => {
   const project = await projectService.createProject(req.body);
   res.status(httpStatus.CREATED).json({
@@ -16,6 +18,12 @@ export const createProject = catchAsync(async (req: Request, res: Response) => {
 export const getProjects = catchAsync(async (req: Request, res: Response) => {
   const filter = pick(req.query, ['name', 'pmId', 'memberId']);
   const options = pick(req.query, ['sortBy', 'limit', 'page']);
+
+  // If user is not SUPERADMIN, restrict to their projects
+  if (req.user!.role !== Role.SUPERADMIN) {
+    (filter as any).memberId = req.user!.id;
+  }
+
   const result = await projectService.queryProjects(filter, options);
   res.status(httpStatus.OK).json({
     message: 'Projects retrieved successfully',

@@ -31,6 +31,16 @@ router.route('/:userId').get(
   userController.getUser,
 );
 
+// Get projects for a specific user
+router
+  .route('/:userId/projects')
+  .get(
+    auth(),
+    checkResourceOwnership('userId', [Role.SUPERADMIN, Role.PM]),
+    validate(userValidation.getUserProjects),
+    userController.getUserProjects,
+  );
+
 // Update user role (SUPERADMIN only)
 router
   .route('/:userId/role')

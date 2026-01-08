@@ -132,3 +132,58 @@
         $ref: '#/components/responses/Forbidden'
       "404":
         $ref: '#/components/responses/NotFound'
+
+/users/{userId}/projects:
+  get:
+    summary: Get projects for a specific user
+    description: Fetch all projects where the user is either a PM or a member.
+    tags: [Users]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: User ID
+      - in: query
+        name: sortBy
+        schema:
+          type: string
+        description: sort by query in the form of field:desc/asc (ex. name:asc)
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          minimum: 1
+        default: 10
+        description: Maximum number of projects
+      - in: query
+        name: page
+        schema:
+          type: integer
+          minimum: 1
+        default: 1
+        description: Page number
+    responses:
+      "200":
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                result:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Project'
+      "401":
+        $ref: '#/components/responses/Unauthorized'
+      "403":
+        $ref: '#/components/responses/Forbidden'
+      "404":
+        $ref: '#/components/responses/NotFound'

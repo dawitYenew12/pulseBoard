@@ -47,6 +47,10 @@ export const getUsers = {
   query: z.object({
     email: z.string().optional(),
     role: z.nativeEnum(Role).optional(),
+    isVerified: z.preprocess((val) => {
+      if (val === undefined || val === null) return undefined;
+      return val === 'true' || val === true;
+    }, z.boolean().optional()),
     sortBy: z.string().optional(),
     limit: z.coerce.number().int().positive().optional(),
     page: z.coerce.number().int().positive().optional(),
@@ -67,5 +71,16 @@ export const updateUserRole = {
     role: z.nativeEnum(Role, {
       message: 'Invalid role. Must be SUPERADMIN, PM, or EMPLOYEE',
     }),
+  }),
+};
+
+export const getUserProjects = {
+  params: z.object({
+    userId: z.string().uuid(),
+  }),
+  query: z.object({
+    sortBy: z.string().optional(),
+    limit: z.coerce.number().int().positive().optional(),
+    page: z.coerce.number().int().positive().optional(),
   }),
 };

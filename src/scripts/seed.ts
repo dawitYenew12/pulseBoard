@@ -25,16 +25,26 @@ function generateRandomPassword(length = 12): string {
 
 async function main() {
   const superAdminEmail = 'ops@gmail.com';
+
+  const existingUser = await prisma.user.findUnique({
+    where: { email: superAdminEmail },
+  });
+
+  if (existingUser) {
+    console.log(
+      `Super Admin (${superAdminEmail}) already exists. Seed skipped.`,
+    );
+    return;
+  }
+
   const plainPassword = generateRandomPassword();
 
   const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
   console.log('Seeding superadmin user...');
 
-  const superAdmin = await prisma.user.upsert({
-    where: { email: superAdminEmail },
-    update: {}, // Don't overwrite if it exists
-    create: {
+  await prisma.user.create({
+    data: {
       email: superAdminEmail,
       password: hashedPassword,
       firstName: 'Super',
@@ -44,15 +54,11 @@ async function main() {
     },
   });
 
-  if (superAdmin.createdAt.getTime() === superAdmin.updatedAt.getTime()) {
-    console.log('-----------------------------------');
-    console.log('Super Admin Created:');
-    console.log(`Email:    ${superAdminEmail}`);
-    console.log(`Password: ${plainPassword}`);
-    console.log('-----------------------------------');
-  } else {
-    console.log(`Super Admin (${superAdminEmail}) already exists.`);
-  }
+  console.log('-----------------------------------');
+  console.log('Super Admin Created:');
+  console.log(`Email:    ${superAdminEmail}`);
+  console.log(`Password: ${plainPassword}`);
+  console.log('-----------------------------------');
 }
 
 main()

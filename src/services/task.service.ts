@@ -48,7 +48,7 @@ export const createTask = async (
  * Query for tasks
  * @param {Object} filter - database filter
  * @param {Object} options - Query options
- * @returns {Promise<Task[]>}
+ * @returns {Promise<{ result: Task[], total: number, page: number, limit: number }>}
  */
 export const queryTasks = async (
   filter: Prisma.TaskWhereInput,
@@ -57,7 +57,7 @@ export const queryTasks = async (
     page?: number;
     sortBy?: string;
   },
-): Promise<Task[]> => {
+): Promise<{ result: Task[]; total: number; page: number; limit: number }> => {
   const page = options.page ?? 1;
   const limit = options.limit ?? 10;
   const skip = (page - 1) * limit;
@@ -73,6 +73,9 @@ export const queryTasks = async (
     orderBy.createdAt = 'desc';
   }
 
+  // Get total count for pagination
+  const total = await prisma.task.count({ where: filter });
+
   const tasks = await prisma.task.findMany({
     where: filter,
     skip,
@@ -84,6 +87,8 @@ export const queryTasks = async (
           id: true,
           email: true,
           role: true,
+          firstName: true,
+          lastName: true,
         },
       },
       creator: {
@@ -91,6 +96,8 @@ export const queryTasks = async (
           id: true,
           email: true,
           role: true,
+          firstName: true,
+          lastName: true,
         },
       },
       project: {
@@ -101,7 +108,13 @@ export const queryTasks = async (
       },
     },
   });
-  return tasks;
+
+  return {
+    result: tasks,
+    total,
+    page,
+    limit,
+  };
 };
 
 /**
@@ -118,6 +131,8 @@ export const getTaskById = async (id: string): Promise<Task | null> => {
           id: true,
           email: true,
           role: true,
+          firstName: true,
+          lastName: true,
         },
       },
       creator: {
@@ -125,6 +140,8 @@ export const getTaskById = async (id: string): Promise<Task | null> => {
           id: true,
           email: true,
           role: true,
+          firstName: true,
+          lastName: true,
         },
       },
       project: {
@@ -349,6 +366,8 @@ export const getClaimedTasksGroupedByProject = async (
               id: true,
               email: true,
               role: true,
+              firstName: true,
+              lastName: true,
             },
           },
           creator: {
@@ -356,6 +375,8 @@ export const getClaimedTasksGroupedByProject = async (
               id: true,
               email: true,
               role: true,
+              firstName: true,
+              lastName: true,
             },
           },
         },

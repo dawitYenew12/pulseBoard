@@ -16,6 +16,8 @@ import ApiError from './utils/ApiError';
 
 import taskRoutes from './routes/task.route';
 import focusSessionRoutes from './routes/focus-session.route';
+import dashboardRoutes from './routes/dashboard.route';
+import auditRoutes from './routes/audit.route';
 // Add more routes as you create them
 
 const app = express();
@@ -60,6 +62,8 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/tasks', taskRoutes);
 app.use('/api/v1/focus-sessions', focusSessionRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/audit-logs', auditRoutes);
 
 // Catch 404
 app.use((_req, _res, next) => {

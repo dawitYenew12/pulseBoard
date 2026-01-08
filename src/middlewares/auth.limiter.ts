@@ -44,7 +44,7 @@ const createCompositeLimiter = ({
       next(
         new ApiError(
           httpStatus.TOO_MANY_REQUESTS,
-          `Too many ${errorMessage} attempts from this IP. Please try again after 24 hours.`,
+          `Too many requests from this IP. Please try again after 24 hours.`,
         ),
       );
     },
@@ -62,7 +62,7 @@ const createCompositeLimiter = ({
       next(
         new ApiError(
           httpStatus.TOO_MANY_REQUESTS,
-          `Too many ${errorMessage} failures for this account. Please try again in 10 minutes.`,
+          `Too many requests. Please try again in 10 minutes.`,
         ),
       );
     },
@@ -81,7 +81,7 @@ const createCompositeLimiter = ({
       next(
         new ApiError(
           httpStatus.TOO_MANY_REQUESTS,
-          `Too many ${errorMessage} attempts. Please try again in 10 minutes.`,
+          `Too many requests. Please try again in 10 minutes.`,
         ),
       );
     },
