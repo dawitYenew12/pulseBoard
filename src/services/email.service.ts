@@ -5,7 +5,7 @@ import config from '../config/config';
 import { prisma } from '../config/prisma';
 import tokenService from './token.service';
 import { TokenType } from '@prisma/client';
-import { getTransporter, renderTemplate } from '../utils/emailTransporter';
+import { renderTemplate, sendEmail } from '../utils/emailTransporter';
 
 /**
  * Send verification email to user
@@ -16,26 +16,18 @@ export const sendVerificationEmail = async (
 ): Promise<void> => {
   try {
     const frontendUrl =
-      process.env.VITE_FRONTEND_URL || 'http://localhost:3000';
+      process.env.VITE_FRONTEND_URL || 'http://localhost:5173';
     const verificationUrl = `${frontendUrl}/email-verified?token=${emailVerificationToken}`;
 
     const templateName = 'email-verification';
     const context = {
-      customName: 'User', // You can make this dynamic by passing username
+      customName: 'User',
       verificationUrl,
     };
 
     const html = await renderTemplate(templateName, context);
-    const transporter = await getTransporter();
 
-    const mailOptions = {
-      from: `PulseBoard <${config.email.user}>`,
-      to: receiverEmail,
-      subject: 'Email Verification - PulseBoard',
-      html,
-    };
-
-    await transporter.sendMail(mailOptions);
+    await sendEmail(receiverEmail, 'Email Verification - PulseBoard', html);
 
     logger.info(`Verification email sent to: ${receiverEmail}`);
   } catch (error) {
@@ -138,7 +130,7 @@ export const sendPasswordResetEmail = async (
 ): Promise<void> => {
   try {
     const frontendUrl =
-      process.env.VITE_FRONTEND_URL || 'http://localhost:3000';
+      process.env.VITE_FRONTEND_URL || 'http://localhost:5173';
     const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     const templateName = 'password-reset';
@@ -148,16 +140,8 @@ export const sendPasswordResetEmail = async (
     };
 
     const html = await renderTemplate(templateName, context);
-    const transporter = await getTransporter();
 
-    const mailOptions = {
-      from: `PulseBoard <${config.email.user}>`,
-      to: receiverEmail,
-      subject: 'Password Reset Request - PulseBoard',
-      html,
-    };
-
-    await transporter.sendMail(mailOptions);
+    await sendEmail(receiverEmail, 'Password Reset Request - PulseBoard', html);
 
     logger.info(`Password reset email sent to: ${receiverEmail}`);
   } catch (error) {

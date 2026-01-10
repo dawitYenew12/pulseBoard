@@ -1,120 +1,117 @@
-import nodemailer, { Transporter } from 'nodemailer';
-import config from '../config/config';
 import { google } from 'googleapis';
-import path from 'path';
-import { create as createHandlebars } from 'express-handlebars';
-import fs from 'fs';
+import { promises as fs } from 'fs';
+import * as path from 'path';
+import * as Handlebars from 'handlebars';
+import { Base64 } from 'js-base64';
 import logger from '../config/logger';
-import ApiError from './ApiError';
-import httpStatus from 'http-status';
+import config from '../config/config';
 
-const hbs = createHandlebars({
-  layoutsDir: path.join(__dirname, '..', 'templates', 'layouts'),
-  defaultLayout: 'main',
-  extname: '.hbs',
-});
-
-const oauth2Client = new google.auth.OAuth2(
-  config.email.clientId,
-  config.email.clientSecret,
-  config.email.redirectUri,
-);
-
-oauth2Client.setCredentials({ refresh_token: config.email.refreshToken });
+const OAuth2 = google.auth.OAuth2;
 
 /**
- * Get OAuth2 access token
+ * Create OAuth2 client
  */
-const getAccessToken = async (): Promise<string> => {
-  try {
-    const accessTokenResponse = await oauth2Client.getAccessToken();
-    if (!accessTokenResponse.token) {
-      throw new ApiError(
-        httpStatus.INTERNAL_SERVER_ERROR,
-        'Failed to retrieve access token',
-      );
-    }
-    return accessTokenResponse.token;
-  } catch (error) {
-    logger.error('Error getting access token:', error);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      'Error getting access token',
-    );
-  }
-};
+const createOAuth2Client = () => {
+  const oauth2Client = new OAuth2(
+    config.email.clientId,
+    config.email.clientSecret,
+    config.email.redirectUri,
+  );
 
-/**
- * Create email transporter with OAuth2
- */
-const createTransporter = async (): Promise<Transporter> => {
-  const accessToken = await getAccessToken();
-
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      type: 'OAuth2',
-      user: config.email.user,
-      clientId: config.email.clientId,
-      clientSecret: config.email.clientSecret,
-      refreshToken: config.email.refreshToken,
-      accessToken: accessToken,
-    },
+  oauth2Client.setCredentials({
+    refresh_token: config.email.refreshToken,
   });
+
+  return oauth2Client;
 };
 
 /**
- * Render Handlebars email template with layout
+ * Render email template using Handlebars
  */
 export const renderTemplate = async (
   templateName: string,
   context: Record<string, any>,
 ): Promise<string> => {
-  const templatePath = path.join(
-    __dirname,
-    '..',
-    'templates',
-    `${templateName}.hbs`,
-  );
-
-  const layoutPath = path.join(
-    __dirname,
-    '..',
-    'templates',
-    'layouts',
-    'main.hbs',
-  );
-
   try {
-    // Read the template and layout
-    const templateContent = await fs.promises.readFile(templatePath, 'utf8');
-    const layoutContent = await fs.promises.readFile(layoutPath, 'utf8');
-
-    // Compile and render the template
-    const compiledTemplate = hbs.handlebars.compile(templateContent, {});
-    const renderedBody = compiledTemplate(context);
-
-    // Compile and render the layout with the body
-    const compiledLayout = hbs.handlebars.compile(layoutContent, {});
-    const renderedHtml = compiledLayout({ body: renderedBody });
-
-    return renderedHtml;
+    const templatePath = path.join(
+      __dirname,
+      '..',
+      'templates',
+      `${templateName}.hbs`,
+    );
+    const templateContent = await fs.readFile(templatePath, 'utf-8');
+    const template = Handlebars.compile(templateContent);
+    return template(context);
   } catch (error) {
-    logger.error(
-      `Error reading the template file: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    );
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      'Error rendering email template',
-    );
+    logger.error(`Error rendering template ${templateName}:`, error);
+    throw new Error(`Failed to render email template: ${templateName}`);
   }
 };
 
 /**
- * Get or create transporter instance
+ * Construct email message in RFC 2822 format
  */
-export const getTransporter = async (): Promise<Transporter> => {
-  return await createTransporter();
+const createEmailBody = (
+  to: string,
+  from: string,
+  subject: string,
+  message: string,
+) => {
+  const str = [
+    `To: ${to}`,
+    `From: ${from}`,
+    `Subject: ${subject}`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=utf-8',
+    '',
+    message,
+  ].join('\n');
+
+  return Base64.encodeURI(str);
 };
 
-export default { renderTemplate, getTransporter };
+/**
+ * Send email using Gmail API
+ */
+export const sendEmail = async (
+  to: string | string[],
+  subject: string,
+  htmlContent: string,
+): Promise<void> => {
+  try {
+    const oauth2Client = createOAuth2Client();
+
+    // We need to refresh the token to ensure we have a valid access token
+    // technically the client handles this but explicit check is good
+    // However, googleapis does this automatically on request if refresh token is present.
+
+    const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
+
+    const recipient = Array.isArray(to) ? to.join(',') : to;
+
+    // Create the raw email body
+    const raw = createEmailBody(
+      recipient,
+      `PulseBoard <${config.email.user}>`,
+      subject,
+      htmlContent,
+    );
+
+    const match = await gmail.users.messages.send({
+      userId: 'me',
+      requestBody: {
+        raw: raw,
+      },
+    });
+
+    logger.info(`Email sent via Gmail API. Id: ${match.data.id}`);
+  } catch (error) {
+    logger.error('Error sending email:', error);
+    throw new Error('Failed to send email via Gmail API');
+  }
+};
+
+export default {
+  renderTemplate,
+  sendEmail,
+};

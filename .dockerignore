@@ -1,0 +1,14 @@
+node_modules
+dist
+npm-debug.log
+.env
+.env.test
+.git
+.vscode
+.dockerignore
+Dockerfile
+logs
+*.log
+README.md
+*.js
+!src/scripts/seed.ts

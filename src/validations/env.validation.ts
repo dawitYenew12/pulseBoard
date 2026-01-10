@@ -27,13 +27,15 @@ export const envVarSchema = z.object({
       CSP_OPTIONS: z.string().optional(),
     })
     .optional(),
-  email: z.object({
-    EMAIL_USER: z.string().email('valid email is required'),
-    EMAIL_CLIENT_ID: z.string().min(1, 'email client id is required'),
-    EMAIL_CLIENT_SECRET: z.string().min(1, 'email client secret is required'),
-    EMAIL_REDIRECT_URI: z.string().url('valid redirect uri is required'),
-    EMAIL_REFRESH_TOKEN: z.string().min(1, 'email refresh token is required'),
-  }),
+  email: z
+    .object({
+      EMAIL_USER: z.string().optional(),
+      EMAIL_CLIENT_ID: z.string().optional(),
+      EMAIL_CLIENT_SECRET: z.string().optional(),
+      EMAIL_REDIRECT_URI: z.string().optional(),
+      EMAIL_REFRESH_TOKEN: z.string().optional(),
+    })
+    .optional(),
   encryption: z.object({
     MASTER_KEY: z.string().min(1, 'master key is required'),
   }),

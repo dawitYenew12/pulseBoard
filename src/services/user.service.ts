@@ -5,6 +5,7 @@ import httpStatus from 'http-status';
 import { UserBody, UserResponse } from '../types/user.types';
 import bcrypt from 'bcryptjs';
 import tokenService from './token.service';
+import logger from '../config/logger';
 import { sendVerificationEmail } from './email.service';
 
 export const isEmailTaken = async (email: string): Promise<boolean> => {
@@ -58,7 +59,13 @@ export const createUser = async (
     return { user: formatUser(user), verificationToken: verificationDoc.token };
   });
 
-  await sendVerificationEmail(result.user.email, result.verificationToken);
+  try {
+    await sendVerificationEmail(result.user.email, result.verificationToken);
+  } catch (error) {
+    logger.error('Failed to send initial verification email:', error);
+    // We don't throw here because the user is already created in the DB
+    // Returning the result allows the frontend to show a "Partial success" or at least not a 500 error.
+  }
 
   return result;
 };

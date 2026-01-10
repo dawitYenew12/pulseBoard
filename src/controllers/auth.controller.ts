@@ -44,7 +44,6 @@ export const signup = catchAsync(async (req: Request, res: Response) => {
     message: `Sent a verification email to ${createdUser.user.email}`,
     user: createdUser.user,
     verificationToken: createdUser.verificationToken,
-    tokens,
   });
 });
 
@@ -77,7 +76,9 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   res.status(httpStatus.OK).json({
     message: 'Login successful',
     user,
-    tokens,
+    tokens: {
+      access: tokens.access,
+    },
   });
 });
 
@@ -114,10 +115,13 @@ export const logout = catchAsync(async (req: Request, res: Response) => {
 
 export const refreshAuthTokens = catchAsync(
   async (req: Request, res: Response) => {
-    const encryptedRefreshToken = req.cookies.refreshToken;
+    const encryptedRefreshToken = req.cookies?.refreshToken;
 
     if (!encryptedRefreshToken) {
-      throw new Error('Refresh token not found in cookies');
+      res
+        .status(httpStatus.UNAUTHORIZED)
+        .json({ message: 'Session expired or invalid' });
+      return;
     }
 
     const tokens = await authService.refreshAuthTokens(encryptedRefreshToken);
@@ -132,7 +136,9 @@ export const refreshAuthTokens = catchAsync(
 
     res.status(httpStatus.OK).json({
       message: 'Tokens refreshed successfully',
-      tokens,
+      tokens: {
+        access: tokens.access,
+      },
     });
   },
 );

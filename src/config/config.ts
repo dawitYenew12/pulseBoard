@@ -108,11 +108,11 @@ const config: Config = {
       envVars.jwt.JWT_RESET_PASSWORD_EXPIRATION_MINUTES,
   },
   email: {
-    user: envVars.email.EMAIL_USER,
-    clientId: envVars.email.EMAIL_CLIENT_ID,
-    clientSecret: envVars.email.EMAIL_CLIENT_SECRET,
-    redirectUri: envVars.email.EMAIL_REDIRECT_URI,
-    refreshToken: envVars.email.EMAIL_REFRESH_TOKEN,
+    user: envVars.email?.EMAIL_USER || '',
+    clientId: envVars.email?.EMAIL_CLIENT_ID || '',
+    clientSecret: envVars.email?.EMAIL_CLIENT_SECRET || '',
+    redirectUri: envVars.email?.EMAIL_REDIRECT_URI || '',
+    refreshToken: envVars.email?.EMAIL_REFRESH_TOKEN || '',
   },
   encryption: {
     masterKey: envVars.encryption.MASTER_KEY,

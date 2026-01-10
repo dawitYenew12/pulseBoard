@@ -22,6 +22,9 @@ import auditRoutes from './routes/audit.route';
 
 const app = express();
 
+// Trust proxy for rate limiting behind Render/Vercel
+app.set('trust proxy', 1);
+
 // Middleware: Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -47,6 +50,11 @@ app.get('/health', (_req, res) => {
     environment: config.env,
     uptime: process.uptime(),
   });
+});
+
+// Root path (to prevent 404 on Render's default health check)
+app.get('/', (_req, res) => {
+  res.status(httpStatus.OK).send('PulseBoard API is running');
 });
 
 import { apiLimiter } from './middlewares/api.limiter';
