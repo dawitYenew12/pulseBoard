@@ -52,7 +52,7 @@ export const getUsers = {
       return val === 'true' || val === true;
     }, z.boolean().optional()),
     sortBy: z.string().optional(),
-    limit: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100).optional(),
     page: z.coerce.number().int().positive().optional(),
   }),
 };
@@ -97,7 +97,7 @@ export const getUserProjects = {
   }),
   query: z.object({
     sortBy: z.string().optional(),
-    limit: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100).optional(),
     page: z.coerce.number().int().positive().optional(),
   }),
 };

@@ -19,7 +19,7 @@ export const getTasks = {
     status: z.nativeEnum(TaskStatus).optional(),
     priority: z.nativeEnum(TaskPriority).optional(),
     sortBy: z.string().optional(),
-    limit: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100).optional(),
     page: z.coerce.number().int().positive().optional(),
   }),
 };
@@ -63,7 +63,7 @@ export const getProjectTasks = {
     status: z.nativeEnum(TaskStatus).optional(),
     priority: z.nativeEnum(TaskPriority).optional(),
     sortBy: z.string().optional(),
-    limit: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().max(100).optional(),
     page: z.coerce.number().int().positive().optional(),
   }),
 };

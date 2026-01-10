@@ -14,8 +14,8 @@ export const getProjects = {
     pmId: z.string().uuid().optional(),
     memberId: z.string().uuid().optional(),
     sortBy: z.string().optional(),
-    limit: z.coerce.number().int().optional(),
-    page: z.coerce.number().int().optional(),
+    limit: z.coerce.number().int().positive().max(100).optional(),
+    page: z.coerce.number().int().positive().optional(),
   }),
 };
 
