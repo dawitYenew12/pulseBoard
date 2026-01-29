@@ -336,6 +336,10 @@ export const addMemberToProject = async (
     data: {
       projectId,
       userId,
+      // Copy GitHub username and set status based on whether user has one
+      githubUsername: user.githubUsername || null,
+      githubStatus: user.githubUsername ? 'LINKED' : 'UNLINKED',
+      projectRole: user.role === Role.PM ? 'PM' : 'MEMBER',
     },
   });
 };

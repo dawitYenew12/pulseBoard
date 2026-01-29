@@ -11,24 +11,26 @@ datasource db {
 ///  * USERS
 ///  * =========================
 model User {
-  id                 String          @id @default(uuid())
-  email              String          @unique
+  id                 String           @id @default(uuid())
+  email              String           @unique
   firstName          String
   lastName           String
-  role               Role            @default(EMPLOYEE)
-  isVerified         Boolean         @default(false)
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
+  role               Role             @default(EMPLOYEE)
+  isVerified         Boolean          @default(false)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
   password           String
+  githubUsername     String?          @unique
   focusSessions      FocusSession[]
   logs               Log[]
-  projectsOwned      Project[]       @relation("ProjectOwner")
+  projectsOwned      Project[]        @relation("ProjectOwner")
   projectMemberships ProjectMember[]
   refreshTokens      RefreshToken[]
-  tasksAssigned      Task[]          @relation("TaskAssignee")
-  tasksCreated       Task[]          @relation("TaskCreator")
+  tasksAssigned      Task[]           @relation("TaskAssignee")
+  tasksCreated       Task[]           @relation("TaskCreator")
   tokens             Token[]
-  projectsAsMember   Project[]       @relation("ProjectMembers")
+  projectsAsMember   Project[]        @relation("ProjectMembers")
+  commitActivities   CommitActivity[]
 }
 
 /// *
@@ -70,27 +72,37 @@ model RefreshToken {
 ///  * PROJECTS
 ///  * =========================
 model Project {
-  id             String          @id @default(uuid())
-  name           String
-  description    String?
-  pmId           String?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  pm             User?           @relation("ProjectOwner", fields: [pmId], references: [id])
-  projectMembers ProjectMember[]
-  tasks          Task[]
-  members        User[]          @relation("ProjectMembers")
+  id                   String          @id @default(uuid())
+  name                 String
+  description          String?
+  pmId                 String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  githubOwner          String?
+  githubRepo           String?
+  githubInstallationId String?
+  pm                   User?           @relation("ProjectOwner", fields: [pmId], references: [id])
+  projectMembers       ProjectMember[]
+  tasks                Task[]
+  members              User[]          @relation("ProjectMembers")
+  commitActivities     CommitActivity[]
+  githubSyncLogs       GitHubSyncLog[]
 }
 
 /// *
 ///  * Many-to-many linking table
 model ProjectMember {
-  id        String   @id @default(uuid())
-  projectId String
-  userId    String
-  createdAt DateTime @default(now())
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String       @id @default(uuid())
+  projectId      String
+  userId         String
+  projectRole    ProjectRole  @default(MEMBER)
+  githubUsername String?
+  githubStatus   GitHubStatus @default(UNLINKED)
+  createdAt      DateTime     @default(now())
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
 }
 
 /// *
@@ -181,4 +193,62 @@ enum TaskPriority {
   LOW
   MEDIUM
   HIGH
+}
+
+/// *
+///  * =========================
+///  * PROJECT ROLE (For ProjectMember)
+///  * =========================
+enum ProjectRole {
+  PM
+  MEMBER
+}
+
+/// *
+///  * =========================
+///  * GITHUB STATUS (For ProjectMember)
+///  * =========================
+enum GitHubStatus {
+  LINKED
+  UNLINKED
+}
+
+/// *
+///  * =========================
+///  * COMMIT ACTIVITY (GitHub Contributions)
+///  * =========================
+///  * Stores pre-computed contribution data for heatmaps
+model CommitActivity {
+  id           String   @id @default(uuid())
+  projectId    String
+  userId       String?
+  activityDate DateTime
+  commitCount  Int
+  createdAt    DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([projectId, userId, activityDate])
+  @@index([projectId])
+  @@index([userId])
+  @@index([activityDate])
+}
+
+/// *
+///  * =========================
+///  * GITHUB SYNC LOG (Optional - for debugging)
+///  * =========================
+///  * Helps debug sync failures for private repo access issues
+model GitHubSyncLog {
+  id        String   @id @default(uuid())
+  projectId String
+  status    String
+  message   String?
+  syncedAt  DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([syncedAt(sort: Desc)])
 }

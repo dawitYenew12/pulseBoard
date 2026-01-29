@@ -39,6 +39,15 @@ export const envVarSchema = z.object({
   encryption: z.object({
     MASTER_KEY: z.string().min(1, 'master key is required'),
   }),
+  github: z
+    .object({
+      GITHUB_APP_ID: z.string().optional(),
+      GITHUB_APP_PRIVATE_KEY: z.string().optional(),
+      GITHUB_CLIENT_ID: z.string().optional(),
+      GITHUB_CLIENT_SECRET: z.string().optional(),
+      GITHUB_WEBHOOK_SECRET: z.string().optional(),
+    })
+    .optional(),
   rateLimit: z.object({
     MAX_ATTEMPTS_BY_IP_PER_DAY: z.coerce.number().default(50),
     MAX_CONSECUTIVE_FAILS_BY_EMAIL_AND_IP: z.coerce.number().default(10),

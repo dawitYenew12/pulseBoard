@@ -39,6 +39,13 @@ const parsed = envVarSchema.safeParse({
   encryption: {
     MASTER_KEY: process.env.MASTER_KEY,
   },
+  github: {
+    GITHUB_APP_ID: process.env.GITHUB_APP_ID,
+    GITHUB_APP_PRIVATE_KEY: process.env.GITHUB_APP_PRIVATE_KEY,
+    GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
+    GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
+    GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,
+  },
   rateLimit: {
     MAX_ATTEMPTS_BY_IP_PER_DAY: process.env.MAX_ATTEMPTS_BY_IP_PER_DAY,
     MAX_CONSECUTIVE_FAILS_BY_EMAIL_AND_IP:
@@ -81,6 +88,13 @@ interface Config {
   encryption: {
     masterKey: string;
   };
+  github: {
+    appId: string;
+    privateKey: string;
+    clientId: string;
+    clientSecret: string;
+    webhookSecret: string;
+  };
   rateLimit: {
     ipMaxAttemptsPerDay: number;
     emailIpMaxFails: number;
@@ -116,6 +130,13 @@ const config: Config = {
   },
   encryption: {
     masterKey: envVars.encryption.MASTER_KEY,
+  },
+  github: {
+    appId: envVars.github?.GITHUB_APP_ID || '',
+    privateKey: envVars.github?.GITHUB_APP_PRIVATE_KEY || '',
+    clientId: envVars.github?.GITHUB_CLIENT_ID || '',
+    clientSecret: envVars.github?.GITHUB_CLIENT_SECRET || '',
+    webhookSecret: envVars.github?.GITHUB_WEBHOOK_SECRET || '',
   },
   rateLimit: {
     ipMaxAttemptsPerDay: envVars.rateLimit.MAX_ATTEMPTS_BY_IP_PER_DAY,

@@ -18,6 +18,7 @@ import taskRoutes from './routes/task.route';
 import focusSessionRoutes from './routes/focus-session.route';
 import dashboardRoutes from './routes/dashboard.route';
 import auditRoutes from './routes/audit.route';
+import githubRoutes from './routes/github.route';
 // Add more routes as you create them
 
 const app = express();
@@ -26,7 +27,14 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Middleware: Body parsing
-app.use(express.json({ limit: '10mb' }));
+app.use(
+  express.json({
+    limit: '10mb',
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf;
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: true }));
 
 // CORS setup (same logic as your ticketing app)
@@ -72,6 +80,7 @@ app.use('/api/v1/tasks', taskRoutes);
 app.use('/api/v1/focus-sessions', focusSessionRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/audit-logs', auditRoutes);
+app.use('/api/v1/github', githubRoutes);
 
 // Catch 404
 app.use((_req, _res, next) => {
